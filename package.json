@@ -6,9 +6,15 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "check-types": "turbo run check-types",
+    "ios": "pnpm --filter mobile ios",
+    "android": "pnpm --filter mobile android",
+    "expo:start": "pnpm --filter mobile start",
+    "expo:prebuild": "pnpm --filter mobile prebuild"
   },
   "devDependencies": {
+    "dotenv": "^17.2.1",
+    "dotenv-cli": "^10.0.0",
     "prettier": "^3.6.2",
     "turbo": "^2.5.5",
     "typescript": "5.9.2"
