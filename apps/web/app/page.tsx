@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import type { FC } from "react";
+import LandingPage from "../components/LandingPage";
 
 const Home: FC = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -31,15 +32,7 @@ const Home: FC = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-5 bg-white">
-      <main className="text-center">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-[#00AAEC] animate-fade-in-up px-4">
-          ¡Página cargada con éxito!
-        </h1>
-      </main>
-    </div>
-  );
+  return <LandingPage />;
 };
 
 export default Home;

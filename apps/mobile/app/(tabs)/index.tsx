@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import Animated, { 
   useSharedValue, 
@@ -7,13 +7,13 @@ import Animated, {
   withRepeat, 
   withTiming
 } from 'react-native-reanimated';
+import LandingPage from '../../components/LandingPage';
 
 export default function HomeScreen() {
   const [showSplash, setShowSplash] = useState(true);
   const scale = useSharedValue(1);
 
   useEffect(() => {
-    // Iniciar animación de palpitación
     scale.value = withRepeat(
       withTiming(1.1, { duration: 1000 }),
       -1,
@@ -22,7 +22,7 @@ export default function HomeScreen() {
 
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 2500); // Mostrar splash por 2.5 segundos
+    }, 3000); // Shows splash screen for 3 seconds
 
     return () => clearTimeout(timer);
   }, [scale]);
@@ -55,11 +55,5 @@ export default function HomeScreen() {
     );
   }
 
-  return (
-    <View className="flex-1 items-center justify-center bg-white px-5">
-      <Text className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#00AAEC] animate-fade-in-up text-center">
-        ¡Página cargada con éxito!
-      </Text>
-    </View>
-  );
+  return <LandingPage />;
 }
