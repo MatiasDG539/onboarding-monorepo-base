@@ -11,7 +11,7 @@ const Home: FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 3000); // Shows splash screen for 3 seconds
+    }, 1500); // Shows splash screen for 1.5 seconds
 
     return () => clearTimeout(timer);
   }, []);
