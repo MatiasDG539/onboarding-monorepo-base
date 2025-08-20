@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import type { FC } from "react";
 
 const LandingPage: FC = () => {
@@ -39,9 +40,11 @@ const LandingPage: FC = () => {
             </div>
             
             <div className="space-y-4">
-              <button className="w-full sm:w-auto bg-[#00AAEC] hover:bg-[#1DA1F2] text-white font-bold py-4 px-8 rounded-full text-lg transition-all duration-200 hover:scale-105 hover:shadow-lg">
+              <Link href="/auth/sign-up">
+                <button className="w-full sm:w-auto bg-[#00AAEC] hover:bg-[#1DA1F2] text-white font-bold py-4 px-8 rounded-full text-lg transition-all duration-200 hover:scale-105 hover:shadow-lg">
                 Get Started
               </button>
+              </Link>
             </div>
           </div>
 
