@@ -1,4 +1,4 @@
-import SignUpPage from "../../../components/signUpPage";
+import SignUpPage from "../../../components/sign-up-page";
 import type { FC } from "react";
 
 const SignUp: FC = () => {

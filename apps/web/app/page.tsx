@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import type { FC } from "react";
-import LandingPage from "../components/LandingPage";
+import LandingPage from "../components/landing-page";
 
 const Home: FC = () => {
   const [showSplash, setShowSplash] = useState(true);
