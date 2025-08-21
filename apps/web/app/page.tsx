@@ -18,7 +18,7 @@ const Home: FC = () => {
 
   if (showSplash) {
     return (
-      <div className="fixed inset-0 w-full h-screen bg-gradient-to-br from-[#00AAEC] to-[#1DA1F2] flex items-center justify-center z-50">
+      <div className="fixed inset-0 w-full h-screen bg-linear-to-br from-[#00AAEC] to-[#1DA1F2] flex items-center justify-center z-50">
         <div className="flex flex-col items-center">
           <Image
             src="/twitter_logo.svg"

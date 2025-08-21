@@ -180,7 +180,7 @@ const SignUpPage: FC = () => {
             value={formData.emailOrPhone}
             onChange={handleInputChange}
             placeholder={useEmail ? "tu@email.com" : "+1 234 567 8900"}
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500 ${
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500 ${
               errors.emailOrPhone
                 ? "border-red-300 focus:border-red-500"
                 : "border-gray-200 focus:border-[#00AAEC]"
@@ -225,7 +225,7 @@ const SignUpPage: FC = () => {
             value={formData.password}
             onChange={handleInputChange}
             placeholder="Mínimo 8 caracteres"
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
               errors.password
                 ? "border-red-300 focus:border-red-500"
                 : "border-gray-200 focus:border-[#00AAEC]"
@@ -247,7 +247,7 @@ const SignUpPage: FC = () => {
             value={formData.confirmPassword}
             onChange={handleInputChange}
             placeholder="Repite tu contraseña"
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
               errors.confirmPassword
                 ? "border-red-300 focus:border-red-500"
                 : "border-gray-200 focus:border-[#00AAEC]"
@@ -281,7 +281,7 @@ const SignUpPage: FC = () => {
               value={formData.firstName}
               onChange={handleInputChange}
               placeholder="Tu nombre"
-              className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+              className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                 errors.firstName
                   ? "border-red-300 focus:border-red-500"
                   : "border-gray-200 focus:border-[#00AAEC]"
@@ -303,7 +303,7 @@ const SignUpPage: FC = () => {
               value={formData.lastName}
               onChange={handleInputChange}
               placeholder="Tu apellido"
-              className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+              className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                 errors.lastName
                   ? "border-red-300 focus:border-red-500"
                   : "border-gray-200 focus:border-[#00AAEC]"
@@ -326,7 +326,7 @@ const SignUpPage: FC = () => {
             value={formData.username}
             onChange={handleInputChange}
             placeholder="@tunombredeusuario"
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
               errors.username
                 ? "border-red-300 focus:border-red-500"
                 : "border-gray-200 focus:border-[#00AAEC]"
@@ -348,7 +348,7 @@ const SignUpPage: FC = () => {
             value={formData.phoneNumber}
             onChange={handleInputChange}
             placeholder="+1 234 567 8900"
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
               errors.phoneNumber
                 ? "border-red-300 focus:border-red-500"
                 : "border-gray-200 focus:border-[#00AAEC]"
