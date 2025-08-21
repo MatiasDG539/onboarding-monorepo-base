@@ -47,7 +47,7 @@ const LandingPage: FC = () => {
             <View className="mb-4 px-4">
             <TouchableOpacity 
               className="bg-[#00AAEC] py-3 px-6 rounded-full"
-              onPress={() => router.push('/sign_up')}
+              onPress={() => router.push('/sign-up')}
               activeOpacity={0.8}
             >
               <Text className="text-white font-bold text-base text-center">

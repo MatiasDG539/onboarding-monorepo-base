@@ -1,6 +1,6 @@
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
-import SignUpPage from "./screens/signUpPage";
+import SignUpPage from "./screens/sign-up-page";
 
 export default function SignUpScreen() {
   const [currentStep, setCurrentStep] = useState(1);
