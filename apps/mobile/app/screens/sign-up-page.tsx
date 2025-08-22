@@ -7,10 +7,12 @@ import {
   ScrollView, 
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  useWindowDimensions,
+  Modal
 } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 
 interface FormData {
   emailOrPhone: string;
@@ -56,8 +58,17 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
   });
 
   const navigation = useNavigation();
+  const router = useRouter();
+  const { width, height } = useWindowDimensions();
+  
+  // Responsive breakpoints
+  const isSmallDevice = width < 375;
+  const isTablet = width >= 768;
+  const isLandscape = width > height;
 
   const [errors, setErrors] = useState<ValidationErrors>({});
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -67,6 +78,219 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
 
   // Username validation (alphanumeric + underscore, 3-20 chars)
   const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+
+  // Date helper functions
+  const formatDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatDateForDisplay = (date: Date) => {
+    const options: Intl.DateTimeFormatOptions = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    const formattedDate = formatDate(date);
+    handleInputChange("birthdate", formattedDate);
+    setShowDatePicker(false);
+  };
+
+  const openDatePicker = () => {
+    setShowDatePicker(true);
+  };
+
+  const DatePickerModal = () => {
+    const [tempDate, setTempDate] = useState(selectedDate || new Date(2000, 0, 1));
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 100 }, (_, i) => currentYear - 13 - i);
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+    const handleConfirm = () => {
+      handleDateSelect(tempDate);
+    };
+
+    const handleCancel = () => {
+      setShowDatePicker(false);
+    };
+
+    return (
+      <Modal
+        visible={showDatePicker}
+        transparent
+        animationType="slide"
+        onRequestClose={handleCancel}
+      >
+        <View style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)'
+        }}>
+          <View style={{
+            backgroundColor: 'white',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+          }}>
+            {/* Header */}
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 20,
+              borderBottomWidth: 1,
+              borderBottomColor: '#e5e7eb'
+            }}>
+              <TouchableOpacity onPress={handleCancel}>
+                <Text style={{ color: '#6b7280', fontSize: 16 }}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={{ fontSize: 18, fontWeight: '600', color: '#111827' }}>
+                Select Birth Date
+              </Text>
+              <TouchableOpacity onPress={handleConfirm}>
+                <Text style={{ color: '#00AAEC', fontSize: 16, fontWeight: '600' }}>Done</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Date Picker Content */}
+            <View style={{ 
+              padding: 20,
+              gap: 16
+            }}>
+              <Text style={{
+                fontSize: 16,
+                fontWeight: '500',
+                color: '#374151',
+                textAlign: 'center',
+                marginBottom: 8
+              }}>
+                {formatDateForDisplay(tempDate)}
+              </Text>
+
+              {/* Year Picker */}
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
+                  Year
+                </Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
+                >
+                  {years.map(year => (
+                    <TouchableOpacity
+                      key={year}
+                      onPress={() => setTempDate(new Date(year, tempDate.getMonth(), tempDate.getDate()))}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 8,
+                        backgroundColor: tempDate.getFullYear() === year ? '#00AAEC' : '#f3f4f6',
+                        minWidth: 60,
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Text style={{
+                        color: tempDate.getFullYear() === year ? 'white' : '#374151',
+                        fontWeight: tempDate.getFullYear() === year ? '600' : '400'
+                      }}>
+                        {year}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Month Picker */}
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
+                  Month
+                </Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
+                >
+                  {months.map((month, index) => (
+                    <TouchableOpacity
+                      key={month}
+                      onPress={() => setTempDate(new Date(tempDate.getFullYear(), index, tempDate.getDate()))}
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: 8,
+                        backgroundColor: tempDate.getMonth() === index ? '#00AAEC' : '#f3f4f6',
+                        minWidth: 80,
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Text style={{
+                        color: tempDate.getMonth() === index ? 'white' : '#374151',
+                        fontWeight: tempDate.getMonth() === index ? '600' : '400',
+                        fontSize: 13
+                      }}>
+                        {month}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Day Picker */}
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
+                  Day
+                </Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
+                >
+                  {days.map(day => {
+                    const daysInMonth = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
+                    if (day > daysInMonth) return null;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={day}
+                        onPress={() => setTempDate(new Date(tempDate.getFullYear(), tempDate.getMonth(), day))}
+                        style={{
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: 8,
+                          backgroundColor: tempDate.getDate() === day ? '#00AAEC' : '#f3f4f6',
+                          minWidth: 40,
+                          alignItems: 'center'
+                        }}
+                      >
+                        <Text style={{
+                          color: tempDate.getDate() === day ? 'white' : '#374151',
+                          fontWeight: tempDate.getDate() === day ? '600' : '400'
+                        }}>
+                          {day}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
    React.useEffect(() => {
     if (currentStep > 1) {
@@ -175,29 +399,43 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
       if (currentStep < 3) {
         setCurrentStep(currentStep + 1);
       } else {
-        Alert.alert(
-          "Account Created", 
-          "Your account has been created successfully!",
-          [{ text: "OK" }]
-        );
+        // Redirigir a verificación de email al completar el registro
+        const emailToVerify = useEmail ? formData.emailOrPhone : formData.emailOrPhone;
+        router.push(`/verify-email?email=${encodeURIComponent(emailToVerify)}`);
       }
     }
   };
 
   const renderStep1 = () => (
-    <View style={{ marginVertical: 32 }}>
+    <View style={{ marginVertical: isLandscape ? 16 : 32 }}>
       <View style={{ marginVertical: 12 }}>
-        <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#111827', textAlign: 'center' }}>
+        <Text style={{ 
+          fontSize: isSmallDevice ? 24 : isTablet ? 36 : 30, 
+          fontWeight: 'bold', 
+          color: '#111827', 
+          textAlign: 'center' 
+        }}>
           Join TwitterClone
         </Text>
-        <Text style={{ color: '#6b7280', textAlign: 'center', fontSize: 18, marginTop: 12 }}>
+        <Text style={{ 
+          color: '#6b7280', 
+          textAlign: 'center', 
+          fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18, 
+          marginTop: 12,
+          paddingHorizontal: isSmallDevice ? 16 : 0
+        }}>
           Let&apos;s start with your {useEmail ? "email" : "phone"}
         </Text>
       </View>
 
-      <View style={{ marginVertical: 24 }}>
+      <View style={{ marginVertical: isLandscape ? 16 : 24 }}>
         <View>
-          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+          <Text style={{ 
+            fontSize: isSmallDevice ? 14 : 16, 
+            fontWeight: '500', 
+            color: '#374151', 
+            marginBottom: 12 
+          }}>
             {useEmail ? "Email" : "Phone Number"}
           </Text>
           <TextInput
@@ -209,21 +447,25 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             autoCorrect={false}
             style={{
               width: '100%',
-              fontSize: 16,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
+              fontSize: isSmallDevice ? 14 : 16,
+              paddingVertical: isSmallDevice ? 12 : 16,
+              paddingHorizontal: isSmallDevice ? 12 : 16,
               borderRadius: 12,
               borderWidth: 2,
               borderColor: errors.emailOrPhone ? '#fca5a5' : '#e5e7eb',
               backgroundColor: 'white',
               color: '#111827',
-              height: 56,
+              height: isSmallDevice ? 48 : isTablet ? 64 : 56,
               textAlignVertical: 'center',
             }}
             placeholderTextColor="#9CA3AF"
           />
           {errors.emailOrPhone && (
-            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+            <Text style={{ 
+              marginTop: 8, 
+              fontSize: isSmallDevice ? 12 : 14, 
+              color: '#dc2626' 
+            }}>
               {errors.emailOrPhone}
             </Text>
           )}
@@ -237,7 +479,11 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           }}
           style={{ alignSelf: 'center', marginTop: 10 }}
         >
-          <Text style={{ color: '#00AAEC', fontWeight: '500', fontSize: 18 }}>
+          <Text style={{ 
+            color: '#00AAEC', 
+            fontWeight: '500', 
+            fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18 
+          }}>
             {useEmail ? "Use phone instead" : "Use email instead"}
           </Text>
         </TouchableOpacity>
@@ -246,19 +492,35 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
   );
 
   const renderStep2 = () => (
-    <View style={{ marginVertical: 32 }}>
+    <View style={{ marginVertical: isLandscape ? 16 : 32 }}>
       <View style={{ marginVertical: 12 }}>
-        <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#111827', textAlign: 'center' }}>
+        <Text style={{ 
+          fontSize: isSmallDevice ? 24 : isTablet ? 36 : 30, 
+          fontWeight: 'bold', 
+          color: '#111827', 
+          textAlign: 'center' 
+        }}>
           Create your password
         </Text>
-        <Text style={{ color: '#6b7280', textAlign: 'center', fontSize: 18, marginTop: 12 }}>
+        <Text style={{ 
+          color: '#6b7280', 
+          textAlign: 'center', 
+          fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18, 
+          marginTop: 12,
+          paddingHorizontal: isSmallDevice ? 16 : 0
+        }}>
           Make sure it&apos;s secure
         </Text>
       </View>
 
-      <View style={{ marginVertical: 24 }}>
+      <View style={{ marginVertical: isLandscape ? 16 : 24 }}>
         <View>
-          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+          <Text style={{ 
+            fontSize: isSmallDevice ? 14 : 16, 
+            fontWeight: '500', 
+            color: '#374151', 
+            marginBottom: 12 
+          }}>
             Password
           </Text>
           <TextInput
@@ -270,28 +532,37 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             autoCorrect={false}
             style={{
               width: '100%',
-              fontSize: 16,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
+              fontSize: isSmallDevice ? 14 : 16,
+              paddingVertical: isSmallDevice ? 12 : 16,
+              paddingHorizontal: isSmallDevice ? 12 : 16,
               borderRadius: 12,
               borderWidth: 2,
               borderColor: errors.password ? '#fca5a5' : '#e5e7eb',
               backgroundColor: 'white',
               color: '#111827',
-              height: 56,
+              height: isSmallDevice ? 48 : isTablet ? 64 : 56,
               textAlignVertical: 'center',
             }}
             placeholderTextColor="#9CA3AF"
           />
           {errors.password && (
-            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+            <Text style={{ 
+              marginTop: 8, 
+              fontSize: isSmallDevice ? 12 : 14, 
+              color: '#dc2626' 
+            }}>
               {errors.password}
             </Text>
           )}
         </View>
 
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+        <View style={{ marginTop: isLandscape ? 16 : 24 }}>
+          <Text style={{ 
+            fontSize: isSmallDevice ? 14 : 16, 
+            fontWeight: '500', 
+            color: '#374151', 
+            marginBottom: 12 
+          }}>
             Confirm Password
           </Text>
           <TextInput
@@ -303,21 +574,25 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             autoCorrect={false}
             style={{
               width: '100%',
-              fontSize: 16,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
+              fontSize: isSmallDevice ? 14 : 16,
+              paddingVertical: isSmallDevice ? 12 : 16,
+              paddingHorizontal: isSmallDevice ? 12 : 16,
               borderRadius: 12,
               borderWidth: 2,
               borderColor: errors.confirmPassword ? '#fca5a5' : '#e5e7eb',
               backgroundColor: 'white',
               color: '#111827',
-              height: 56,
+              height: isSmallDevice ? 48 : isTablet ? 64 : 56,
               textAlignVertical: 'center',
             }}
             placeholderTextColor="#9CA3AF"
           />
           {errors.confirmPassword && (
-            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+            <Text style={{ 
+              marginTop: 8, 
+              fontSize: isSmallDevice ? 12 : 14, 
+              color: '#dc2626' 
+            }}>
               {errors.confirmPassword}
             </Text>
           )}
@@ -327,20 +602,39 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
   );
 
   const renderStep3 = () => (
-    <View style={{ marginVertical: 32 }}>
+    <View style={{ marginVertical: isLandscape ? 16 : 32 }}>
       <View style={{ marginVertical: 12 }}>
-        <Text style={{ fontSize: 30, fontWeight: 'bold', color: '#111827', textAlign: 'center' }}>
+        <Text style={{ 
+          fontSize: isSmallDevice ? 24 : isTablet ? 36 : 30, 
+          fontWeight: 'bold', 
+          color: '#111827', 
+          textAlign: 'center' 
+        }}>
           Tell us about yourself
         </Text>
-        <Text style={{ color: '#6b7280', textAlign: 'center', fontSize: 18, marginTop: 12 }}>
+        <Text style={{ 
+          color: '#6b7280', 
+          textAlign: 'center', 
+          fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18, 
+          marginTop: 12,
+          paddingHorizontal: isSmallDevice ? 16 : 0
+        }}>
           Complete your profile
         </Text>
       </View>
 
-      <View style={{ marginVertical: 24 }}>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+      <View style={{ marginVertical: isLandscape ? 16 : 24 }}>
+        <View style={{ 
+          flexDirection: isLandscape && isTablet ? 'row' : 'column',
+          gap: isLandscape && isTablet ? 24 : 12 
+        }}>
+          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
+            <Text style={{ 
+              fontSize: isSmallDevice ? 14 : 16, 
+              fontWeight: '500', 
+              color: '#374151', 
+              marginBottom: 12 
+            }}>
               First Name
             </Text>
             <TextInput
@@ -349,29 +643,38 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               placeholder="Your first name"
               autoCapitalize="words"
               style={{
-                flex: 1,
-                fontSize: 16,
-                paddingVertical: 16,
-                paddingHorizontal: 16,
+                width: '100%',
+                fontSize: isSmallDevice ? 14 : 16,
+                paddingVertical: isSmallDevice ? 12 : 16,
+                paddingHorizontal: isSmallDevice ? 12 : 16,
                 borderRadius: 12,
                 borderWidth: 2,
                 borderColor: errors.firstName ? '#fca5a5' : '#e5e7eb',
                 backgroundColor: 'white',
                 color: '#111827',
-                height: 56,
+                height: isSmallDevice ? 48 : isTablet ? 64 : 56,
                 textAlignVertical: 'center',
               }}
               placeholderTextColor="#9CA3AF"
             />
             {errors.firstName && (
-              <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              <Text style={{ 
+                marginTop: 8, 
+                fontSize: isSmallDevice ? 12 : 14, 
+                color: '#dc2626' 
+              }}>
                 {errors.firstName}
               </Text>
             )}
           </View>
 
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
+            <Text style={{ 
+              fontSize: isSmallDevice ? 14 : 16, 
+              fontWeight: '500', 
+              color: '#374151', 
+              marginBottom: 12 
+            }}>
               Last Name
             </Text>
             <TextInput
@@ -380,30 +683,39 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               placeholder="Your last name"
               autoCapitalize="words"
               style={{
-                flex: 1,
-                fontSize: 16,
-                paddingVertical: 16,
-                paddingHorizontal: 16,
+                width: '100%',
+                fontSize: isSmallDevice ? 14 : 16,
+                paddingVertical: isSmallDevice ? 12 : 16,
+                paddingHorizontal: isSmallDevice ? 12 : 16,
                 borderRadius: 12,
                 borderWidth: 2,
                 borderColor: errors.lastName ? '#fca5a5' : '#e5e7eb',
                 backgroundColor: 'white',
                 color: '#111827',
-                height: 56,
+                height: isSmallDevice ? 48 : isTablet ? 64 : 56,
                 textAlignVertical: 'center',
               }}
               placeholderTextColor="#9CA3AF"
             />
             {errors.lastName && (
-              <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              <Text style={{ 
+                marginTop: 8, 
+                fontSize: isSmallDevice ? 12 : 14, 
+                color: '#dc2626' 
+              }}>
                 {errors.lastName}
               </Text>
             )}
           </View>
         </View>
 
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+        <View style={{ marginTop: isLandscape ? 16 : 24 }}>
+          <Text style={{ 
+            fontSize: isSmallDevice ? 14 : 16, 
+            fontWeight: '500', 
+            color: '#374151', 
+            marginBottom: 12 
+          }}>
             Username
           </Text>
           <TextInput
@@ -414,101 +726,152 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             autoCorrect={false}
             style={{
               width: '100%',
-              fontSize: 16,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
+              fontSize: isSmallDevice ? 14 : 16,
+              paddingVertical: isSmallDevice ? 12 : 16,
+              paddingHorizontal: isSmallDevice ? 12 : 16,
               borderRadius: 12,
               borderWidth: 2,
               borderColor: errors.username ? '#fca5a5' : '#e5e7eb',
               backgroundColor: 'white',
               color: '#111827',
-              height: 56,
+              height: isSmallDevice ? 48 : isTablet ? 64 : 56,
               textAlignVertical: 'center',
             }}
             placeholderTextColor="#9CA3AF"
           />
           {errors.username && (
-            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+            <Text style={{ 
+              marginTop: 8, 
+              fontSize: isSmallDevice ? 12 : 14, 
+              color: '#dc2626' 
+            }}>
               {errors.username}
             </Text>
           )}
         </View>
 
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
-            Phone Number
-          </Text>
-          <TextInput
-            value={formData.phoneNumber}
-            onChangeText={(text) => handleInputChange("phoneNumber", text)}
-            placeholder="+1 234 567 8900"
-            keyboardType="phone-pad"
-            style={{
-              width: '100%',
-              fontSize: 16,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
-              borderRadius: 12,
-              borderWidth: 2,
-              borderColor: errors.phoneNumber ? '#fca5a5' : '#e5e7eb',
-              backgroundColor: 'white',
-              color: '#111827',
-              height: 56,
-              textAlignVertical: 'center',
-            }}
-            placeholderTextColor="#9CA3AF"
-          />
-          {errors.phoneNumber && (
-            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-              {errors.phoneNumber}
+        <View style={{ 
+          marginTop: isLandscape ? 16 : 24,
+          flexDirection: isLandscape && isTablet ? 'row' : 'column',
+          gap: isLandscape && isTablet ? 24 : (isLandscape ? 16 : 24)
+        }}>
+          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
+            <Text style={{ 
+              fontSize: isSmallDevice ? 14 : 16, 
+              fontWeight: '500', 
+              color: '#374151', 
+              marginBottom: 12 
+            }}>
+              Phone Number
             </Text>
-          )}
+            <TextInput
+              value={formData.phoneNumber}
+              onChangeText={(text) => handleInputChange("phoneNumber", text)}
+              placeholder="+1 234 567 8900"
+              keyboardType="phone-pad"
+              style={{
+                width: '100%',
+                fontSize: isSmallDevice ? 14 : 16,
+                paddingVertical: isSmallDevice ? 12 : 16,
+                paddingHorizontal: isSmallDevice ? 12 : 16,
+                borderRadius: 12,
+                borderWidth: 2,
+                borderColor: errors.phoneNumber ? '#fca5a5' : '#e5e7eb',
+                backgroundColor: 'white',
+                color: '#111827',
+                height: isSmallDevice ? 48 : isTablet ? 64 : 56,
+                textAlignVertical: 'center',
+              }}
+              placeholderTextColor="#9CA3AF"
+            />
+            {errors.phoneNumber && (
+              <Text style={{ 
+                marginTop: 8, 
+                fontSize: isSmallDevice ? 12 : 14, 
+                color: '#dc2626' 
+              }}>
+                {errors.phoneNumber}
+              </Text>
+            )}
+          </View>
+
+          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
+            <Text style={{ 
+              fontSize: isSmallDevice ? 14 : 16, 
+              fontWeight: '500', 
+              color: '#374151', 
+              marginBottom: 12 
+            }}>
+              Birth Date
+            </Text>
+            <TouchableOpacity
+              onPress={openDatePicker}
+              style={{
+                width: '100%',
+                paddingVertical: isSmallDevice ? 12 : 16,
+                paddingHorizontal: isSmallDevice ? 12 : 16,
+                borderRadius: 12,
+                borderWidth: 2,
+                borderColor: errors.birthdate ? '#fca5a5' : '#e5e7eb',
+                backgroundColor: 'white',
+                height: isSmallDevice ? 48 : isTablet ? 64 : 56,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Text style={{
+                fontSize: isSmallDevice ? 14 : 16,
+                color: formData.birthdate ? '#111827' : '#9CA3AF'
+              }}>
+                {formData.birthdate || 'Select your birth date'}
+              </Text>
+              <Text style={{
+                fontSize: 18,
+                color: '#6b7280'
+              }}>
+                📅
+              </Text>
+            </TouchableOpacity>
+            {errors.birthdate && (
+              <Text style={{ 
+                marginTop: 8, 
+                fontSize: isSmallDevice ? 12 : 14, 
+                color: '#dc2626' 
+              }}>
+                {errors.birthdate}
+              </Text>
+            )}
+          </View>
         </View>
 
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
-            Birth Date
-          </Text>
-          <TextInput
-            value={formData.birthdate}
-            onChangeText={(text) => handleInputChange("birthdate", text)}
-            placeholder="YYYY-MM-DD"
-            style={{
-              width: '100%',
-              fontSize: 16,
-              paddingVertical: 16,
-              paddingHorizontal: 16,
-              borderRadius: 12,
-              borderWidth: 2,
-              borderColor: errors.birthdate ? '#fca5a5' : '#e5e7eb',
-              backgroundColor: 'white',
-              color: '#111827',
-              height: 56,
-              textAlignVertical: 'center',
-            }}
-            placeholderTextColor="#9CA3AF"
-          />
-          {errors.birthdate && (
-            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-              {errors.birthdate}
-            </Text>
-          )}
-        </View>
-
-        <View style={{ marginTop: 24 }}>
-          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+        <View style={{ marginTop: isLandscape ? 16 : 24 }}>
+          <Text style={{ 
+            fontSize: isSmallDevice ? 14 : 16, 
+            fontWeight: '500', 
+            color: '#374151', 
+            marginBottom: 12 
+          }}>
             Profile Picture (optional)
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+          <View style={{ 
+            flexDirection: isSmallDevice ? 'column' : 'row', 
+            alignItems: isSmallDevice ? 'center' : 'center', 
+            gap: isSmallDevice ? 12 : 16 
+          }}>
             <View style={{ 
-              width: 80, 
-              height: 80, 
+              width: isSmallDevice ? 60 : isTablet ? 100 : 80, 
+              height: isSmallDevice ? 60 : isTablet ? 100 : 80, 
               backgroundColor: '#00AAEC', 
-              borderRadius: 40, 
+              borderRadius: isSmallDevice ? 30 : isTablet ? 50 : 40, 
               justifyContent: 'center', 
               alignItems: 'center' 
             }}>
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 24 }}>
+              <Text style={{ 
+                color: 'white', 
+                fontWeight: 'bold', 
+                fontSize: isSmallDevice ? 18 : isTablet ? 32 : 24 
+              }}>
                 {formData.firstName.charAt(0).toUpperCase() || "?"}
               </Text>
             </View>
@@ -516,13 +879,19 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               onPress={pickImage}
               style={{ 
                 backgroundColor: '#00AAEC', 
-                paddingVertical: 12, 
-                paddingHorizontal: 24, 
+                paddingVertical: isSmallDevice ? 10 : 12, 
+                paddingHorizontal: isSmallDevice ? 20 : 24, 
                 borderRadius: 12, 
-                flex: 1 
+                flex: isSmallDevice ? undefined : 1,
+                minWidth: isSmallDevice ? 120 : undefined
               }}
             >
-              <Text style={{ color: 'white', fontWeight: '600', textAlign: 'center', fontSize: 18 }}>
+              <Text style={{ 
+                color: 'white', 
+                fontWeight: '600', 
+                textAlign: 'center', 
+                fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18 
+              }}>
                 Select Image
               </Text>
             </TouchableOpacity>
@@ -542,16 +911,20 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ 
           flexGrow: 1,
-          paddingHorizontal: 20,
-          paddingTop: 60,
-          paddingBottom: 40
+          paddingHorizontal: isSmallDevice ? 16 : isTablet ? 32 : 20,
+          paddingTop: isLandscape ? 20 : isSmallDevice ? 40 : 60,
+          paddingBottom: isLandscape ? 20 : 40
         }}
       >
-        <View style={{ flex: 1, justifyContent: 'center' }}>
+        <View style={{ flex: 1, justifyContent: isLandscape ? 'flex-start' : 'center' }}>
           {/* Header */}
-          <View style={{ marginBottom: 24 }}>
+          <View style={{ marginBottom: isLandscape ? 16 : 24 }}>
             <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <Svg width={56} height={56} viewBox="0 -4 48 48">
+              <Svg 
+                width={isSmallDevice ? 48 : isTablet ? 72 : 56} 
+                height={isSmallDevice ? 48 : isTablet ? 72 : 56} 
+                viewBox="0 -4 48 48"
+              >
                 <G stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
                   <G transform="translate(-300, -164)" fill="#00AAEC">
                     <Path d="M348,168.735283 C346.236309,169.538462 344.337383,170.081618 342.345483,170.324305 C344.379644,169.076201 345.940482,167.097147 346.675823,164.739617 C344.771263,165.895269 342.666667,166.736006 340.418384,167.18671 C338.626519,165.224991 336.065504,164 333.231203,164 C327.796443,164 323.387216,168.521488 323.387216,174.097508 C323.387216,174.88913 323.471738,175.657638 323.640782,176.397255 C315.456242,175.975442 308.201444,171.959552 303.341433,165.843265 C302.493397,167.339834 302.008804,169.076201 302.008804,170.925244 C302.008804,174.426869 303.747139,177.518238 306.389857,179.329722 C304.778306,179.280607 303.256911,178.821235 301.9271,178.070061 L301.9271,178.194294 C301.9271,183.08848 305.322064,187.17082 309.8299,188.095341 C309.004402,188.33225 308.133826,188.450704 307.235077,188.450704 C306.601162,188.450704 305.981335,188.390033 305.381229,188.271578 C306.634971,192.28169 310.269414,195.2026 314.580032,195.280607 C311.210424,197.99061 306.961789,199.605634 302.349709,199.605634 C301.555203,199.605634 300.769149,199.559408 300,199.466956 C304.358514,202.327194 309.53689,204 315.095615,204 C333.211481,204 343.114633,188.615385 343.114633,175.270495 C343.114633,174.831347 343.106181,174.392199 343.089276,173.961719 C345.013559,172.537378 346.684275,170.760563 348,168.735283" />
@@ -560,14 +933,19 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               </Svg>
             </View>
             
-            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 24 }}>
+            <View style={{ 
+              flexDirection: 'row', 
+              justifyContent: 'center', 
+              gap: 12, 
+              marginBottom: isLandscape ? 16 : 24 
+            }}>
               {[1, 2, 3].map((step) => (
                 <View
                   key={step}
                   style={{
-                    width: 16,
-                    height: 16,
-                    borderRadius: 8,
+                    width: isSmallDevice ? 12 : 16,
+                    height: isSmallDevice ? 12 : 16,
+                    borderRadius: isSmallDevice ? 6 : 8,
                     backgroundColor: step <= currentStep ? "#00AAEC" : "#d1d5db"
                   }}
                 />
@@ -578,9 +956,9 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           {/* Form Container */}
           <View style={{ 
             backgroundColor: 'white', 
-            borderRadius: 24, 
-            padding: 32, 
-            marginBottom: 32,
+            borderRadius: isSmallDevice ? 16 : isTablet ? 32 : 24, 
+            padding: isSmallDevice ? 20 : isTablet ? 40 : 32, 
+            marginBottom: isLandscape ? 16 : 32,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.1,
@@ -598,15 +976,15 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
                 disabled={!validateCurrentStep()}
                 style={{
                   width: '100%',
-                  paddingVertical: 16,
-                  paddingHorizontal: 24,
-                  borderRadius: 16,
+                  paddingVertical: isSmallDevice ? 14 : isTablet ? 20 : 16,
+                  paddingHorizontal: isSmallDevice ? 20 : 24,
+                  borderRadius: isSmallDevice ? 12 : 16,
                   backgroundColor: validateCurrentStep() ? '#00AAEC' : '#d1d5db',
                 }}
               >
                 <Text style={{
                   fontWeight: 'bold',
-                  fontSize: 20,
+                  fontSize: isSmallDevice ? 18 : isTablet ? 24 : 20,
                   textAlign: 'center',
                   color: validateCurrentStep() ? 'white' : '#6b7280'
                 }}>
@@ -617,8 +995,12 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           </View>
 
           {/* Footer */}
-          <View style={{ marginTop: 24 }}>
-            <Text style={{ color: '#6b7280', fontSize: 16, textAlign: 'center' }}>
+          <View style={{ marginTop: isLandscape ? 16 : 24 }}>
+            <Text style={{ 
+              color: '#6b7280', 
+              fontSize: isSmallDevice ? 14 : isTablet ? 18 : 16, 
+              textAlign: 'center' 
+            }}>
               Already have an account?{" "}
               <Text style={{ color: '#00AAEC', fontWeight: '500' }}>
                 Sign in
@@ -627,6 +1009,8 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           </View>
         </View>
       </ScrollView>
+      
+      <DatePickerModal />
     </KeyboardAvoidingView>
   );
 }
