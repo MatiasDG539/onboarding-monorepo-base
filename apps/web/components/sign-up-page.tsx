@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type { FC } from "react";
+import { Button } from "@repo/ui/button";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   emailOrPhone: string;
@@ -28,6 +30,7 @@ interface ValidationErrors {
 }
 
 const SignUpPage: FC = () => {
+  const router = useRouter();
   const [useEmail, setUseEmail] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
@@ -56,49 +59,49 @@ const SignUpPage: FC = () => {
   const validateField = useCallback((name: string, value: string): string | undefined => {
     switch (name) {
       case "emailOrPhone":
-        if (!value.trim()) return "Este campo es requerido";
+        if (!value.trim()) return "This field is required";
         if (useEmail) {
-          if (!emailRegex.test(value)) return "Ingresa un email válido";
+          if (!emailRegex.test(value)) return "Enter a valid email";
         } else {
-          if (!phoneRegex.test(value)) return "Ingresa un número de teléfono válido";
+          if (!phoneRegex.test(value)) return "Enter a valid phone number";
         }
         break;
       case "password":
-        if (!value) return "La contraseña es requerida";
-        if (value.length < 8) return "La contraseña debe tener al menos 8 caracteres";
+        if (!value) return "Password is required";
+        if (value.length < 8) return "Password must be at least 8 characters";
         if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          return "La contraseña debe contener al menos una mayúscula, una minúscula y un número";
+          return "Password must contain at least one uppercase, one lowercase, and one number";
         }
         break;
       case "confirmPassword":
-        if (!value) return "Confirma tu contraseña";
-        if (value !== formData.password) return "Las contraseñas no coinciden";
+        if (!value) return "Confirm your password";
+        if (value !== formData.password) return "Passwords don't match";
         break;
       case "firstName":
-        if (!value.trim()) return "El nombre es requerido";
-        if (value.trim().length < 2) return "El nombre debe tener al menos 2 caracteres";
+        if (!value.trim()) return "First name is required";
+        if (value.trim().length < 2) return "First name must be at least 2 characters";
         break;
       case "lastName":
-        if (!value.trim()) return "El apellido es requerido";
-        if (value.trim().length < 2) return "El apellido debe tener al menos 2 caracteres";
+        if (!value.trim()) return "Last name is required";
+        if (value.trim().length < 2) return "Last name must be at least 2 characters";
         break;
       case "username":
-        if (!value.trim()) return "El nombre de usuario es requerido";
+        if (!value.trim()) return "Username is required";
         if (!usernameRegex.test(value)) {
-          return "El nombre de usuario debe tener 3-20 caracteres (letras, números y _)";
+          return "Username must be 3-20 characters (letters, numbers, and _)";
         }
         break;
       case "phoneNumber":
-        if (!value.trim()) return "El número de teléfono es requerido";
-        if (!phoneRegex.test(value)) return "Ingresa un número de teléfono válido";
+        if (!value.trim()) return "Phone number is required";
+        if (!phoneRegex.test(value)) return "Enter a valid phone number";
         break;
       case "birthdate": {
-        if (!value) return "La fecha de nacimiento es requerida";
+        if (!value) return "Birth date is required";
         const birthDate = new Date(value);
         const today = new Date();
         const age = today.getFullYear() - birthDate.getFullYear();
-        if (age < 13) return "Debes tener al menos 13 años";
-        if (age > 120) return "Ingresa una fecha de nacimiento válida";
+        if (age < 13) return "You must be at least 13 years old";
+        if (age > 120) return "Enter a valid birth date";
         break;
       }
     }
@@ -148,9 +151,10 @@ const SignUpPage: FC = () => {
       if (currentStep < 3) {
         setCurrentStep(currentStep + 1);
       } else {
-        // Submit form
-        console.log("Form submitted:", formData);
-        // Here you would handle the actual form submission
+        
+        const emailToVerify = useEmail ? formData.emailOrPhone : formData.emailOrPhone;
+        const encodedEmail = encodeURIComponent(emailToVerify);
+        router.push(`/auth/verify/email?email=${encodedEmail}`);
       }
     }
   };
@@ -164,14 +168,14 @@ const SignUpPage: FC = () => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Únete a TwitterClone</h2>
-        <p className="text-gray-600">Comencemos con tu {useEmail ? "email" : "teléfono"}</p>
+        <h2 className="text-2xl font-bold text-gray-900">Join TwitterClone</h2>
+        <p className="text-gray-600">Let&apos;s start with your {useEmail ? "email" : "phone"}</p>
       </div>
 
       <div className="space-y-4">
         <div>
           <label htmlFor="emailOrPhone" className="block text-sm font-medium text-gray-700 mb-2">
-            {useEmail ? "Email" : "Número de teléfono"}
+            {useEmail ? "Email" : "Phone Number"}
           </label>
           <input
             type={useEmail ? "email" : "tel"}
@@ -179,7 +183,7 @@ const SignUpPage: FC = () => {
             name="emailOrPhone"
             value={formData.emailOrPhone}
             onChange={handleInputChange}
-            placeholder={useEmail ? "tu@email.com" : "+1 234 567 8900"}
+            placeholder={useEmail ? "your@email.com" : "+1 234 567 8900"}
             className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500 ${
               errors.emailOrPhone
                 ? "border-red-300 focus:border-red-500"
@@ -191,17 +195,17 @@ const SignUpPage: FC = () => {
           )}
         </div>
 
-        <button
-          type="button"
+        <Button
+          appName="TwitterClone"
+          className="text-[#00AAEC] hover:text-[#1DA1F2] font-medium transition-colors"
           onClick={() => {
             setUseEmail(!useEmail);
             setFormData(prev => ({ ...prev, emailOrPhone: "" }));
             setErrors(prev => ({ ...prev, emailOrPhone: undefined }));
           }}
-          className="text-[#00AAEC] hover:text-[#1DA1F2] font-medium transition-colors"
         >
-          {useEmail ? "Usar teléfono en su lugar" : "Usar email en su lugar"}
-        </button>
+          {useEmail ? "Use phone instead" : "Use email instead"}
+        </Button>
       </div>
     </div>
   );
@@ -209,14 +213,14 @@ const SignUpPage: FC = () => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Crea tu contraseña</h2>
-        <p className="text-gray-600">Asegúrate de que sea segura</p>
+        <h2 className="text-2xl font-bold text-gray-900">Create your password</h2>
+        <p className="text-gray-600">Make sure it&apos;s secure</p>
       </div>
 
       <div className="space-y-4">
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-            Contraseña
+            Password
           </label>
           <input
             type="password"
@@ -224,7 +228,7 @@ const SignUpPage: FC = () => {
             name="password"
             value={formData.password}
             onChange={handleInputChange}
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Minimum 8 characters"
             className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
               errors.password
                 ? "border-red-300 focus:border-red-500"
@@ -238,7 +242,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-            Confirmar contraseña
+            Confirm password
           </label>
           <input
             type="password"
@@ -246,7 +250,7 @@ const SignUpPage: FC = () => {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleInputChange}
-            placeholder="Repite tu contraseña"
+            placeholder="Repeat your password"
             className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
               errors.confirmPassword
                 ? "border-red-300 focus:border-red-500"
@@ -264,15 +268,15 @@ const SignUpPage: FC = () => {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Cuéntanos sobre ti</h2>
-        <p className="text-gray-600">Completa tu perfil</p>
+        <h2 className="text-2xl font-bold text-gray-900">Tell us about yourself</h2>
+        <p className="text-gray-600">Complete your profile</p>
       </div>
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre
+              First Name
             </label>
             <input
               type="text"
@@ -280,7 +284,7 @@ const SignUpPage: FC = () => {
               name="firstName"
               value={formData.firstName}
               onChange={handleInputChange}
-              placeholder="Tu nombre"
+              placeholder="Your first name"
               className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                 errors.firstName
                   ? "border-red-300 focus:border-red-500"
@@ -294,7 +298,7 @@ const SignUpPage: FC = () => {
 
           <div>
             <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-              Apellido
+              Last Name
             </label>
             <input
               type="text"
@@ -302,7 +306,7 @@ const SignUpPage: FC = () => {
               name="lastName"
               value={formData.lastName}
               onChange={handleInputChange}
-              placeholder="Tu apellido"
+              placeholder="Your last name"
               className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                 errors.lastName
                   ? "border-red-300 focus:border-red-500"
@@ -317,7 +321,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-            Nombre de usuario
+            Username
           </label>
           <input
             type="text"
@@ -325,7 +329,7 @@ const SignUpPage: FC = () => {
             name="username"
             value={formData.username}
             onChange={handleInputChange}
-            placeholder="@tunombredeusuario"
+            placeholder="@yourusername"
             className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
               errors.username
                 ? "border-red-300 focus:border-red-500"
@@ -339,7 +343,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-            Número de teléfono
+            Phone Number
           </label>
           <input
             type="tel"
@@ -361,7 +365,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-2">
-            Fecha de nacimiento
+            Birth Date
           </label>
           <input
             type="date"
@@ -383,7 +387,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700 mb-2">
-            Foto de perfil (opcional)
+            Profile Picture (optional)
           </label>
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-r from-[#00AAEC] to-[#1DA1F2] rounded-full flex items-center justify-center overflow-hidden">
@@ -417,6 +421,7 @@ const SignUpPage: FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -450,27 +455,29 @@ const SignUpPage: FC = () => {
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
 
-          {/* Navigation Buttons */}
+
           <div className="mt-8 space-y-4">
-            <button
+            <Button
               onClick={handleNext}
               disabled={!isFormValid}
+              appName="TwitterClone"
               className={`w-full py-3 px-6 rounded-full font-bold text-lg transition-all duration-200 ${
                 isFormValid
                   ? "bg-[#00AAEC] hover:bg-[#1DA1F2] text-white hover:scale-105 hover:shadow-lg"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              {currentStep === 3 ? "Crear cuenta" : "Siguiente"}
-            </button>
+              {currentStep === 3 ? "Create Account" : "Next"}
+            </Button>
 
             {currentStep > 1 && (
-              <button
+              <Button
                 onClick={handleBack}
+                appName="TwitterClone"
                 className="w-full py-3 px-6 rounded-full font-bold text-lg border-2 border-gray-300 text-gray-700 hover:border-[#00AAEC] hover:text-[#00AAEC] transition-colors"
               >
-                Atrás
-              </button>
+                Back
+              </Button>
             )}
           </div>
         </div>
@@ -478,10 +485,12 @@ const SignUpPage: FC = () => {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-gray-500 text-sm">
-            ¿Ya tienes una cuenta?{" "}
+            Already have an account?{" "}
+
             <a href="#" className="text-[#00AAEC] hover:text-[#1DA1F2] font-medium transition-colors">
-              Inicia sesión
+              Sign in
             </a>
+
           </p>
         </div>
       </div>
