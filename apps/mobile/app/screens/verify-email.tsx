@@ -111,21 +111,43 @@ export default function VerifyEmailScreen() {
     setError('');
     
     try {
-        
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (codeToVerify === '123456') {
-        console.log('Code verified successfully:', codeToVerify);
+      console.log('Sending verification request:', { email, code: codeToVerify });
+
+      const response = await fetch("http://localhost:3001/api/verifyCode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, code: codeToVerify }),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('HTTP error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+      }
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const responseText = await response.text();
+        console.error("Non-JSON response:", responseText);
+        throw new Error(`Expected JSON response, got: ${contentType}`);
+      }
+
+      const data = await response.json();
+      console.log('Response data:', data);
+
+      if (data.success) {
         router.replace('/(tabs)');
       } else {
-        setError('Incorrect code. Please try again.');
+        setError(data.error || "Incorrect code. Please try again.");
         setCode(['', '', '', '', '', '']);
         triggerShakeAnimation();
         setTimeout(() => inputRefs.current[0]?.focus(), 100);
       }
     } catch (err) {
       console.error('Verification error:', err);
-      setError('Error verifying code. Please try again.');
+      setError(err instanceof Error ? err.message : "Error verifying code. Please try again.");
       triggerShakeAnimation();
     } finally {
       setIsLoading(false);
@@ -136,17 +158,32 @@ export default function VerifyEmailScreen() {
     if (!canResend) return;
     
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
       console.log('Resending verification code to:', email);
-      setResendTimer(60);
-      setCanResend(false);
-      setCode(['', '', '', '', '', '']);
-      setError('');
-      inputRefs.current[0]?.focus();
+      
+      const response = await fetch("http://localhost:3001/api/sendEmail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: email }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setResendTimer(60);
+        setCanResend(false);
+        setCode(['', '', '', '', '', '']);
+        setError('');
+        inputRefs.current[0]?.focus();
+      } else {
+        setError("Failed to resend code. Please try again.");
+      }
     } catch (err) {
       console.error('Resend error:', err);
-      setError('Error resending code. Please try again.');
+      setError("Error resending code. Please try again.");
     }
   };
 

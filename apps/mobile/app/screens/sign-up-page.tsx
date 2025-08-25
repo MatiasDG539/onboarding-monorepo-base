@@ -393,15 +393,37 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
     return false;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const isValid = validateCurrentStep();
     if (isValid) {
       if (currentStep < 3) {
         setCurrentStep(currentStep + 1);
       } else {
-        // Redirigir a verificación de email al completar el registro
+        // Enviar código de verificación al completar el registro
         const emailToVerify = useEmail ? formData.emailOrPhone : formData.emailOrPhone;
-        router.push(`/verify-email?email=${encodeURIComponent(emailToVerify)}`);
+        
+        try {
+          const response = await fetch("http://localhost:3001/api/sendEmail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: emailToVerify }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          
+          if (data.success) {
+            router.push(`/verify-email?email=${encodeURIComponent(emailToVerify)}`);
+          } else {
+            Alert.alert("Error", "Error al enviar el código de verificación. Por favor, intenta de nuevo.");
+          }
+        } catch (error) {
+          console.error("Error enviando código:", error);
+          Alert.alert("Error", "Error al enviar el código de verificación. Por favor, intenta de nuevo.");
+        }
       }
     }
   };

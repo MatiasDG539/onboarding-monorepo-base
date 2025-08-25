@@ -17,7 +17,18 @@ config.resolver.nodeModulesPaths = [
     path.resolve(projectRoot, "node_modules"),
     path.resolve(workspaceRoot, "node_modules"),
 ];
-// 3. Force Metro to resolve (sub)dependencies only from the `nodeModulesPaths`
-// config.resolver.disableHierarchicalLookup = true;
+
+// Force resolution of React to avoid multiple copies
+config.resolver.alias = {
+  'react': path.resolve(workspaceRoot, 'node_modules/react'),
+  'react-dom': path.resolve(workspaceRoot, 'node_modules/react-dom'),
+  '@types/react': path.resolve(workspaceRoot, 'node_modules/@types/react'),
+};
+
+// Ensure we prioritize local node_modules
+config.resolver.disableHierarchicalLookup = false;
+
+// Clear any existing platform extensions and use defaults
+config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
 module.exports = withNativeWind(config, { input: './global.css' })
