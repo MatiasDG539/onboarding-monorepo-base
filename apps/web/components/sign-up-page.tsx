@@ -151,10 +151,29 @@ const SignUpPage: FC = () => {
       if (currentStep < 3) {
         setCurrentStep(currentStep + 1);
       } else {
-        
-        const emailToVerify = useEmail ? formData.emailOrPhone : formData.emailOrPhone;
-        const encodedEmail = encodeURIComponent(emailToVerify);
-        router.push(`/auth/verify/email?email=${encodedEmail}`);
+        if (currentStep === 3) {
+          const emailToVerify = formData.emailOrPhone;
+
+          fetch("/api/sendEmail", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: emailToVerify }),
+          })
+            .then(res => {
+              if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+              }
+              return res.json();
+            })
+            .then(() => {
+              const encodedEmail = encodeURIComponent(emailToVerify);
+              router.push(`/auth/verify/email?email=${encodedEmail}`);
+            })
+            .catch(err => {
+              console.error("Error enviando código:", err);
+              alert("Error al enviar el código de verificación. Por favor, intenta de nuevo.");
+            });
+        }
       }
     }
   };

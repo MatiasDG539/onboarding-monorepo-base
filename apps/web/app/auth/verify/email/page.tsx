@@ -2,11 +2,12 @@ import React from "react";
 import VerifyEmail from "../../../../components/verify-email";
 
 interface EmailVerificationPageProps {
-  searchParams: { email?: string };
+  searchParams: Promise<{ email?: string }>;
 }
 
-const EmailVerificationPage = ({ searchParams }: EmailVerificationPageProps) => {
-  const email = searchParams.email || "user@example.com";
+const EmailVerificationPage = async ({ searchParams }: EmailVerificationPageProps) => {
+  const params = await searchParams;
+  const email = params.email || "user@example.com";
   
   return <VerifyEmail email={email} />;
 };
