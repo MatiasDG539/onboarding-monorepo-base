@@ -60,7 +60,6 @@ export default function VerifyEmailScreen() {
     }
   }, [resendTimer]);
 
-  // Check if code is complete
   useEffect(() => {
     const isCompleteCode = code.every(digit => digit !== '');
     setIsComplete(isCompleteCode);
@@ -79,10 +78,10 @@ export default function VerifyEmailScreen() {
   };
 
   const handleInputChange = (index: number, value: string) => {
-    // Remove any non-numeric characters and accents
+    
     const cleanValue = value.replace(/[^0-9]/g, '');
     
-    if (cleanValue.length === 0 && value.length > 0) return; // Reject non-numeric input
+    if (cleanValue.length === 0 && value.length > 0) return;
     
     const newCode = [...code];
     newCode[index] = cleanValue.slice(-1);
@@ -93,7 +92,6 @@ export default function VerifyEmailScreen() {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-verify when complete
     if (newCode.every(digit => digit !== '') && cleanValue) {
       setTimeout(() => handleVerify(newCode.join('')), 300);
     }
@@ -111,44 +109,63 @@ export default function VerifyEmailScreen() {
     setError('');
     
     try {
-      console.log('Sending verification request:', { email, code: codeToVerify });
-
       const response = await fetch("http://localhost:3001/api/verifyCode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code: codeToVerify }),
       });
 
-      console.log('Response status:', response.status);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('HTTP error response:', errorText);
-        throw new Error(`HTTP error! status: ${response.status}, response: ${errorText}`);
+        if (response.status === 400) {
+          setError("Invalid code. Please check and try again.");
+        } else if (response.status === 404) {
+          setError("Verification code not found. Please request a new one.");
+        } else if (response.status === 429) {
+          setError("Too many attempts. Please wait a moment and try again.");
+        } else if (response.status >= 500) {
+          setError("Server error. Please try again in a moment.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+        setCode(['', '', '', '', '', '']);
+        triggerShakeAnimation();
+        setTimeout(() => inputRefs.current[0]?.focus(), 100);
+        return;
       }
 
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        const responseText = await response.text();
-        console.error("Non-JSON response:", responseText);
-        throw new Error(`Expected JSON response, got: ${contentType}`);
+        setError("Something went wrong. Please try again.");
+        return;
       }
 
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (data.success) {
         router.replace('/(tabs)');
       } else {
-        setError(data.error || "Incorrect code. Please try again.");
+        
+        const errorMessage = data.error === "Invalid code" 
+          ? "Invalid code. Please check and try again."
+          : data.error || "Invalid code. Please try again.";
+        
+        setError(errorMessage);
         setCode(['', '', '', '', '', '']);
         triggerShakeAnimation();
         setTimeout(() => inputRefs.current[0]?.focus(), 100);
       }
     } catch (err) {
       console.error('Verification error:', err);
-      setError(err instanceof Error ? err.message : "Error verifying code. Please try again.");
+      
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        setError("Connection error. Please check your internet connection.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+      
+      setCode(['', '', '', '', '', '']);
       triggerShakeAnimation();
+      setTimeout(() => inputRefs.current[0]?.focus(), 100);
     } finally {
       setIsLoading(false);
     }
@@ -158,8 +175,6 @@ export default function VerifyEmailScreen() {
     if (!canResend) return;
     
     try {
-      console.log('Resending verification code to:', email);
-      
       const response = await fetch("http://localhost:3001/api/sendEmail", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,7 +182,14 @@ export default function VerifyEmailScreen() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        if (response.status === 429) {
+          setError("Too many requests. Please wait before trying again.");
+        } else if (response.status >= 500) {
+          setError("Server error. Please try again in a moment.");
+        } else {
+          setError("Failed to resend code. Please try again.");
+        }
+        return;
       }
 
       const data = await response.json();
@@ -183,7 +205,12 @@ export default function VerifyEmailScreen() {
       }
     } catch (err) {
       console.error('Resend error:', err);
-      setError("Error resending code. Please try again.");
+      
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        setError("Connection error. Please check your internet connection.");
+      } else {
+        setError("Failed to resend code. Please try again.");
+      }
     }
   };
 
@@ -279,7 +306,15 @@ export default function VerifyEmailScreen() {
 
             {error ? (
               <View style={styles.errorContainer}>
-                <Text style={styles.errorText}>❌ {error}</Text>
+                <View style={styles.errorContent}>
+                  <Svg width={16} height={16} viewBox="0 0 20 20" fill="none" style={styles.errorIcon}>
+                    <Path 
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" 
+                      fill="#dc2626"
+                    />
+                  </Svg>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
               </View>
             ) : (
               <View style={styles.hintContainer}>
@@ -503,12 +538,29 @@ const createMobileStyles = (isSmallDevice: boolean, isLargeDevice: boolean, isLa
   errorContainer: {
     alignItems: 'center',
     minHeight: 24,
+    backgroundColor: '#fef2f2',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  errorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  errorIcon: {
+    flexShrink: 0,
   },
   errorText: {
     fontSize: isSmallDevice ? 12 : 14,
-    color: '#ef4444',
+    color: '#dc2626',
     textAlign: 'center',
     fontWeight: '500',
+    flex: 1,
   },
 
   actionSection: {

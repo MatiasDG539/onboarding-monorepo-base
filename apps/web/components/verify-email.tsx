@@ -90,7 +90,6 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
 
     try {
       const enteredCode = code.join("");
-      console.log("Sending verification request:", { email, code: enteredCode });
 
       const res = await fetch("/api/verifyCode", {
         method: "POST",
@@ -98,35 +97,57 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
         body: JSON.stringify({ email, code: enteredCode }),
       });
 
-      console.log("Response status:", res.status);
-      console.log("Response headers:", Object.fromEntries(res.headers.entries()));
-
+      // Manejo de errores HTTP específicos
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error("HTTP error response:", errorText);
-        throw new Error(`HTTP error! status: ${res.status}, response: ${errorText}`);
+        if (res.status === 400) {
+          setError("Invalid code. Please check and try again.");
+        } else if (res.status === 404) {
+          setError("Verification code not found. Please request a new one.");
+        } else if (res.status === 429) {
+          setError("Too many attempts. Please wait a moment and try again.");
+        } else if (res.status >= 500) {
+          setError("Server error. Please try again in a moment.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
+        setCode(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+        return;
       }
 
+      // Verificar si la respuesta es JSON válida
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
-        const responseText = await res.text();
-        console.error("Non-JSON response:", responseText);
-        throw new Error(`Expected JSON response, got: ${contentType}`);
+        setError("Something went wrong. Please try again.");
+        return;
       }
 
       const data = await res.json();
-      console.log("Response data:", data);
 
       if (data.success) {
         router.push("/dashboard");
       } else {
-        setError(data.error || "Incorrect code. Please try again.");
+        // Show specific server message or generic one
+        const errorMessage = data.error === "Invalid code" 
+          ? "Invalid code. Please check and try again."
+          : data.error || "Invalid code. Please try again.";
+        
+        setError(errorMessage);
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
       }
     } catch (err) {
       console.error("Error verifying code:", err);
-      setError(err instanceof Error ? err.message : "Error verifying code. Please try again.");
+      
+      // Manejo de errores de red
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        setError("Connection error. Please check your internet connection.");
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+      
+      setCode(["", "", "", "", "", ""]);
+      inputRefs.current[0]?.focus();
     } finally {
       setIsLoading(false);
     }
@@ -144,22 +165,33 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
       });
 
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        if (res.status === 429) {
+          setError("Too many requests. Please wait before trying again.");
+        } else if (res.status >= 500) {
+          setError("Server error. Please try again in a moment.");
+        } else {
+          setError("Failed to resend code. Please try again.");
+        }
+        return;
       }
 
       const data = await res.json();
       
       if (data.success) {
         setCanResend(false);
-        setResendTimer(60); // 60 seconds timer
-        // Optional: show success message
+        setResendTimer(60);
         setError("");
       } else {
         setError("Failed to resend code. Please try again.");
       }
     } catch (err) {
       console.error("Error resending code:", err);
-      setError("Error resending code. Please try again.");
+      
+      if (err instanceof TypeError && err.message.includes("fetch")) {
+        setError("Connection error. Please check your internet connection.");
+      } else {
+        setError("Failed to resend code. Please try again.");
+      }
     }
   };
 
@@ -219,8 +251,21 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
             </div>
 
             {error && (
-              <div className="text-center">
-                <p className="text-red-600 text-sm font-medium">{error}</p>
+              <div className="text-center p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center justify-center space-x-2">
+                  <svg 
+                    className="w-5 h-5 text-red-500 flex-shrink-0" 
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                  >
+                    <path 
+                      fillRule="evenodd" 
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" 
+                      clipRule="evenodd" 
+                    />
+                  </svg>
+                  <p className="text-red-700 text-sm font-medium">{error}</p>
+                </div>
               </div>
             )}
 
