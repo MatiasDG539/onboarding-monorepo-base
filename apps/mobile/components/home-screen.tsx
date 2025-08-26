@@ -4,7 +4,7 @@ import Svg, { G, Path } from 'react-native-svg';
 import type { FC } from 'react';
 import { useRouter } from 'expo-router';
 
-const LandingPage: FC = () => {
+const HomeScreen: FC = () => {
 
   const router = useRouter();
 
@@ -112,4 +112,4 @@ const LandingPage: FC = () => {
   );
 };
 
-export default LandingPage;
+export default HomeScreen;
