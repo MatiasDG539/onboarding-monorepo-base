@@ -43,6 +43,7 @@ interface SignUpPageProps {
 
 export default function SignUpPage({ currentStep, setCurrentStep, onBack }: SignUpPageProps) {
   const [useEmail, setUseEmail] = useState(true);
+  
   const [formData, setFormData] = useState<FormData>({
     emailOrPhone: "",
     password: "",
