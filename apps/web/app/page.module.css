@@ -16,6 +16,109 @@
   font-synthesis: none;
 }
 
+/* Estilos para el splash screen */
+.splashContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(135deg, #00AAEC 0%, #1DA1F2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.splashContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+}
+
+.splashLogo {
+  filter: brightness(0) invert(1);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.successTitle {
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+  color: #00AAEC;
+  margin: 0;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Estilos responsive */
+@media (max-width: 768px) {
+  .successTitle {
+    font-size: 2rem;
+    padding: 0 20px;
+  }
+  
+  .splashLogo {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .loadingSpinner {
+    width: 30px;
+    height: 30px;
+    border-width: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .successTitle {
+    font-size: 1.5rem;
+  }
+  
+  .splashLogo {
+    width: 60px;
+    height: 60px;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .page {
     --gray-rgb: 255, 255, 255;
