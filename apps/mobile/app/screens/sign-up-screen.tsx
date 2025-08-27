@@ -73,7 +73,7 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
     profilePicture: null,
   });
 
-  const pickImage = async () => {
+  const pickImage = () => {
     Alert.alert(
       "Select Image", 
       "This functionality will be available soon.",
