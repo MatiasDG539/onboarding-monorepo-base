@@ -1,36 +1,54 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState } from "react";
 import type { FC } from "react";
-
-interface FormData {
-  emailOrPhone: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  phoneNumber: string;
-  birthdate: string;
-  profilePicture: File | null;
-}
-
-interface ValidationErrors {
-  emailOrPhone?: string;
-  password?: string;
-  confirmPassword?: string;
-  firstName?: string;
-  lastName?: string;
-  username?: string;
-  phoneNumber?: string;
-  birthdate?: string;
-}
-
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { 
+  SignUpStep1Schema, 
+  SignUpStep2Schema, 
+  SignUpStep3Schema,
+  type SignUpStep1Data,
+  type SignUpStep2Data,
+  type SignUpStep3Data,
+  type CompleteSignUpData
+} from '@repo/forms/schemas';
 const SignUpPage: FC = () => {
   const [useEmail, setUseEmail] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>({
+
+  const emailOrPhoneForm = useForm<SignUpStep1Data>({
+    resolver: zodResolver(SignUpStep1Schema),
+    mode: 'onChange',
+    defaultValues: {
+      emailOrPhone: "",
+    }
+  });
+
+  const passwordForm = useForm<SignUpStep2Data>({
+    resolver: zodResolver(SignUpStep2Schema),
+    mode: 'onChange',
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
+    }
+  });
+
+  const profileForm = useForm<SignUpStep3Data>({
+    resolver: zodResolver(SignUpStep3Schema),
+    mode: 'onChange',
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      username: "",
+      phoneNumber: "",
+      birthdate: "",
+      profilePicture: null,
+    }
+  });
+
+  const [formData, setFormData] = useState<CompleteSignUpData>({
     emailOrPhone: "",
     password: "",
     confirmPassword: "",
@@ -41,116 +59,47 @@ const SignUpPage: FC = () => {
     birthdate: "",
     profilePicture: null,
   });
-  const [errors, setErrors] = useState<ValidationErrors>({});
-  const [isFormValid, setIsFormValid] = useState(false);
-
-  // Email validation regex
-  const emailRegex = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/, []);
-  
-  // Phone validation regex (basic international format)
-  const phoneRegex = useMemo(() => /^\+?[\d\s\-()]{10,15}$/, []);
-
-  // Username validation (alphanumeric + underscore, 3-20 chars)
-  const usernameRegex = useMemo(() => /^[a-zA-Z0-9_]{3,20}$/, []);
-
-  const validateField = useCallback((name: string, value: string): string | undefined => {
-    switch (name) {
-      case "emailOrPhone":
-        if (!value.trim()) return "Este campo es requerido";
-        if (useEmail) {
-          if (!emailRegex.test(value)) return "Ingresa un email válido";
-        } else {
-          if (!phoneRegex.test(value)) return "Ingresa un número de teléfono válido";
-        }
-        break;
-      case "password":
-        if (!value) return "La contraseña es requerida";
-        if (value.length < 8) return "La contraseña debe tener al menos 8 caracteres";
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          return "La contraseña debe contener al menos una mayúscula, una minúscula y un número";
-        }
-        break;
-      case "confirmPassword":
-        if (!value) return "Confirma tu contraseña";
-        if (value !== formData.password) return "Las contraseñas no coinciden";
-        break;
-      case "firstName":
-        if (!value.trim()) return "El nombre es requerido";
-        if (value.trim().length < 2) return "El nombre debe tener al menos 2 caracteres";
-        break;
-      case "lastName":
-        if (!value.trim()) return "El apellido es requerido";
-        if (value.trim().length < 2) return "El apellido debe tener al menos 2 caracteres";
-        break;
-      case "username":
-        if (!value.trim()) return "El nombre de usuario es requerido";
-        if (!usernameRegex.test(value)) {
-          return "El nombre de usuario debe tener 3-20 caracteres (letras, números y _)";
-        }
-        break;
-      case "phoneNumber":
-        if (!value.trim()) return "El número de teléfono es requerido";
-        if (!phoneRegex.test(value)) return "Ingresa un número de teléfono válido";
-        break;
-      case "birthdate": {
-        if (!value) return "La fecha de nacimiento es requerida";
-        const birthDate = new Date(value);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        if (age < 13) return "Debes tener al menos 13 años";
-        if (age > 120) return "Ingresa una fecha de nacimiento válida";
-        break;
-      }
-    }
-    return undefined;
-  }, [useEmail, emailRegex, phoneRegex, usernameRegex, formData.password]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Real-time validation
-    const error = validateField(name, value);
-    setErrors(prev => ({ ...prev, [name]: error }));
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData(prev => ({ ...prev, profilePicture: file }));
+    setFormData((prev: CompleteSignUpData) => ({ ...prev, profilePicture: file }));
+    if (file) {
+      profileForm.setValue('profilePicture', file);
+    }
   };
 
-  const validateCurrentStep = useCallback((): boolean => {
+  const validateCurrentStep = (): boolean => {
     if (currentStep === 1) {
-      const emailOrPhoneError = validateField("emailOrPhone", formData.emailOrPhone);
-      return !emailOrPhoneError;
+      return emailOrPhoneForm.formState.isValid;
     } else if (currentStep === 2) {
-      const passwordError = validateField("password", formData.password);
-      const confirmPasswordError = validateField("confirmPassword", formData.confirmPassword);
-      return !passwordError && !confirmPasswordError;
+      return passwordForm.formState.isValid;
     } else if (currentStep === 3) {
-      const firstNameError = validateField("firstName", formData.firstName);
-      const lastNameError = validateField("lastName", formData.lastName);
-      const usernameError = validateField("username", formData.username);
-      const phoneError = validateField("phoneNumber", formData.phoneNumber);
-      const birthdateError = validateField("birthdate", formData.birthdate);
-      
-      return !firstNameError && !lastNameError && !usernameError && !phoneError && !birthdateError;
+      return profileForm.formState.isValid;
     }
     return false;
-  }, [currentStep, formData, validateField]);
+  };
 
-  useEffect(() => {
-    setIsFormValid(validateCurrentStep());
-  }, [formData, currentStep, validateCurrentStep]);
-
-  const handleNext = () => {
-    if (validateCurrentStep()) {
-      if (currentStep < 3) {
+  const handleNext = async () => {
+    if (currentStep === 1) {
+      const isValid = await emailOrPhoneForm.trigger();
+      if (isValid) {
+        const values = emailOrPhoneForm.getValues();
+        setFormData((prev: CompleteSignUpData) => ({ ...prev, ...values }));
         setCurrentStep(currentStep + 1);
-      } else {
-        // Submit form
-        console.log("Form submitted:", formData);
-        // Here you would handle the actual form submission
+      }
+    } else if (currentStep === 2) {
+      const isValid = await passwordForm.trigger();
+      if (isValid) {
+        const values = passwordForm.getValues();
+        setFormData((prev: CompleteSignUpData) => ({ ...prev, ...values }));
+        setCurrentStep(currentStep + 1);
+      }
+    } else if (currentStep === 3) {
+      const isValid = await profileForm.trigger();
+      if (isValid) {
+        const values = profileForm.getValues();
+        const finalData = { ...formData, ...values };
+        setFormData(finalData);
       }
     }
   };
@@ -173,30 +122,38 @@ const SignUpPage: FC = () => {
           <label htmlFor="emailOrPhone" className="block text-sm font-medium text-gray-700 mb-2">
             {useEmail ? "Email" : "Número de teléfono"}
           </label>
-          <input
-            type={useEmail ? "email" : "tel"}
-            id="emailOrPhone"
+          <Controller
+            control={emailOrPhoneForm.control}
             name="emailOrPhone"
-            value={formData.emailOrPhone}
-            onChange={handleInputChange}
-            placeholder={useEmail ? "tu@email.com" : "+1 234 567 8900"}
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500 ${
-              errors.emailOrPhone
-                ? "border-red-300 focus:border-red-500"
-                : "border-gray-200 focus:border-[#00AAEC]"
-            }`}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <>
+                <input
+                  type={useEmail ? "email" : "tel"}
+                  id="emailOrPhone"
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder={useEmail ? "tu@email.com" : "+1 234 567 8900"}
+                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500 ${
+                    error
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-[#00AAEC]"
+                  }`}
+                />
+                {error && (
+                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                )}
+              </>
+            )}
           />
-          {errors.emailOrPhone && (
-            <p className="mt-1 text-sm text-red-600">{errors.emailOrPhone}</p>
-          )}
         </div>
 
         <button
           type="button"
           onClick={() => {
             setUseEmail(!useEmail);
-            setFormData(prev => ({ ...prev, emailOrPhone: "" }));
-            setErrors(prev => ({ ...prev, emailOrPhone: undefined }));
+            emailOrPhoneForm.setValue("emailOrPhone", "");
+            emailOrPhoneForm.clearErrors("emailOrPhone");
           }}
           className="text-[#00AAEC] hover:text-[#1DA1F2] font-medium transition-colors"
         >
@@ -218,44 +175,62 @@ const SignUpPage: FC = () => {
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
             Contraseña
           </label>
-          <input
-            type="password"
-            id="password"
+
+          <Controller
+            control={passwordForm.control}
             name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            placeholder="Mínimo 8 caracteres"
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-              errors.password
-                ? "border-red-300 focus:border-red-500"
-                : "border-gray-200 focus:border-[#00AAEC]"
-            }`}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <>
+                <input
+                  type="password"
+                  id="password"
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder="Mínimo 8 caracteres"
+                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                    error
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-[#00AAEC]"
+                  }`}
+                />
+                {error && (
+                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                )}
+              </>
+            )}
           />
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-          )}
         </div>
 
         <div>
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
             Confirmar contraseña
           </label>
-          <input
-            type="password"
-            id="confirmPassword"
+
+          <Controller
+            control={passwordForm.control}
             name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleInputChange}
-            placeholder="Repite tu contraseña"
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-              errors.confirmPassword
-                ? "border-red-300 focus:border-red-500"
-                : "border-gray-200 focus:border-[#00AAEC]"
-            }`}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <>
+                <input
+                  type="password"
+                  id="confirmPassword"
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder="Repite tu contraseña"
+                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                    error
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-[#00AAEC]"
+                  }`}
+                />
+                {error && (
+                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                )}
+              </>
+            )}
           />
-          {errors.confirmPassword && (
-            <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-          )}
         </div>
       </div>
     </div>
@@ -274,44 +249,62 @@ const SignUpPage: FC = () => {
             <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
               Nombre
             </label>
-            <input
-              type="text"
-              id="firstName"
+
+            <Controller
+              control={profileForm.control}
               name="firstName"
-              value={formData.firstName}
-              onChange={handleInputChange}
-              placeholder="Tu nombre"
-              className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-                errors.firstName
-                  ? "border-red-300 focus:border-red-500"
-                  : "border-gray-200 focus:border-[#00AAEC]"
-              }`}
+              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                <>
+                  <input
+                    type="text"
+                    id="firstName"
+                    value={value}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    placeholder="Tu nombre"
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                      error
+                        ? "border-red-300 focus:border-red-500"
+                        : "border-gray-200 focus:border-[#00AAEC]"
+                    }`}
+                  />
+                  {error && (
+                    <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                  )}
+                </>
+              )}
             />
-            {errors.firstName && (
-              <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
-            )}
           </div>
 
           <div>
             <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
               Apellido
             </label>
-            <input
-              type="text"
-              id="lastName"
+
+            <Controller
+              control={profileForm.control}
               name="lastName"
-              value={formData.lastName}
-              onChange={handleInputChange}
-              placeholder="Tu apellido"
-              className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-                errors.lastName
-                  ? "border-red-300 focus:border-red-500"
-                  : "border-gray-200 focus:border-[#00AAEC]"
-              }`}
+              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+                <>
+                  <input
+                    type="text"
+                    id="lastName"
+                    value={value}
+                    onChange={onChange}
+                    onBlur={onBlur}
+                    placeholder="Tu apellido"
+                    className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                      error
+                        ? "border-red-300 focus:border-red-500"
+                        : "border-gray-200 focus:border-[#00AAEC]"
+                    }`}
+                  />
+                  {error && (
+                    <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                  )}
+                </>
+              )}
             />
-            {errors.lastName && (
-              <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
-            )}
           </div>
         </div>
 
@@ -319,66 +312,92 @@ const SignUpPage: FC = () => {
           <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
             Nombre de usuario
           </label>
-          <input
-            type="text"
-            id="username"
+
+          <Controller
+            control={profileForm.control}
             name="username"
-            value={formData.username}
-            onChange={handleInputChange}
-            placeholder="@tunombredeusuario"
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-              errors.username
-                ? "border-red-300 focus:border-red-500"
-                : "border-gray-200 focus:border-[#00AAEC]"
-            }`}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <>
+                <input
+                  type="text"
+                  id="username"
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder="@tunombredeusuario"
+                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                    error
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-[#00AAEC]"
+                  }`}
+                />
+                {error && (
+                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                )}
+              </>
+            )}
           />
-          {errors.username && (
-            <p className="mt-1 text-sm text-red-600">{errors.username}</p>
-          )}
         </div>
 
         <div>
           <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
             Número de teléfono
           </label>
-          <input
-            type="tel"
-            id="phoneNumber"
+          <Controller
+            control={profileForm.control}
             name="phoneNumber"
-            value={formData.phoneNumber}
-            onChange={handleInputChange}
-            placeholder="+1 234 567 8900"
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-              errors.phoneNumber
-                ? "border-red-300 focus:border-red-500"
-                : "border-gray-200 focus:border-[#00AAEC]"
-            }`}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  placeholder="+1 234 567 8900"
+                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                    error
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-[#00AAEC]"
+                  }`}
+                />
+                {error && (
+                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                )}
+              </>
+            )}
           />
-          {errors.phoneNumber && (
-            <p className="mt-1 text-sm text-red-600">{errors.phoneNumber}</p>
-          )}
         </div>
 
         <div>
           <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-2">
             Fecha de nacimiento
           </label>
-          <input
-            type="date"
-            id="birthdate"
+
+          <Controller
+            control={profileForm.control}
             name="birthdate"
-            value={formData.birthdate}
-            onChange={handleInputChange}
-            max={new Date().toISOString().split('T')[0]}
-            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-              errors.birthdate
-                ? "border-red-300 focus:border-red-500"
-                : "border-gray-200 focus:border-[#00AAEC]"
-            }`}
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <>
+                <input
+                  type="date"
+                  id="birthdate"
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  max={new Date().toISOString().split('T')[0]}
+                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-none focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                    error
+                      ? "border-red-300 focus:border-red-500"
+                      : "border-gray-200 focus:border-[#00AAEC]"
+                  }`}
+                />
+                {error && (
+                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                )}
+              </>
+            )}
           />
-          {errors.birthdate && (
-            <p className="mt-1 text-sm text-red-600">{errors.birthdate}</p>
-          )}
         </div>
 
         <div>
@@ -397,7 +416,7 @@ const SignUpPage: FC = () => {
                 />
               ) : (
                 <span className="text-white font-bold text-xl">
-                  {formData.firstName.charAt(0).toUpperCase()}
+                  {profileForm.watch("firstName")?.charAt(0).toUpperCase() || "?"}
                 </span>
               )}
             </div>
@@ -417,6 +436,7 @@ const SignUpPage: FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
@@ -429,7 +449,6 @@ const SignUpPage: FC = () => {
             />
           </div>
           
-          {/* Progress Indicator */}
           <div className="flex justify-center space-x-2 mb-6">
             {[1, 2, 3].map((step) => (
               <div
@@ -444,19 +463,17 @@ const SignUpPage: FC = () => {
           </div>
         </div>
 
-        {/* Form Container */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
 
-          {/* Navigation Buttons */}
           <div className="mt-8 space-y-4">
             <button
               onClick={handleNext}
-              disabled={!isFormValid}
+              disabled={!validateCurrentStep()}
               className={`w-full py-3 px-6 rounded-full font-bold text-lg transition-all duration-200 ${
-                isFormValid
+                validateCurrentStep()
                   ? "bg-[#00AAEC] hover:bg-[#1DA1F2] text-white hover:scale-105 hover:shadow-lg"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
