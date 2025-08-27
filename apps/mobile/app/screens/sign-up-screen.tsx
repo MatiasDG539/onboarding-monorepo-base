@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -69,7 +69,7 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
   // Username validation (alphanumeric + underscore, 3-20 chars)
   const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
 
-   React.useEffect(() => {
+   useEffect(() => {
     if (currentStep > 1) {
       navigation.setOptions({
         headerLeft: () => (
