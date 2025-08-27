@@ -69,33 +69,3 @@ export type SignUpStep2Data = z.infer<typeof SignUpStep2Schema>;
 export type SignUpStep3Data = z.infer<typeof SignUpStep3Schema>;
 
 export type CompleteSignUpData = SignUpStep1Data & SignUpStep2Data & SignUpStep3Data;
-
-export type EmailOrPhoneFormData = SignUpStep1Data;
-export type PasswordFormData = SignUpStep2Data;
-export type ProfileFormDataWeb = SignUpStep3Data;
-export type ProfileFormDataMobile = SignUpStep3Data;
-export type SignUpFormDataWeb = CompleteSignUpData;
-export type SignUpFormDataMobile = CompleteSignUpData;
-
-export const validateEmail = (email: string): boolean => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
-
-export const validatePhone = (phone: string): boolean => {
-  return /^\+?[\d\s\-()]{10,15}$/.test(phone);
-};
-
-export const validatePassword = (password: string): boolean => {
-  return password.length >= 8 && /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password);
-};
-
-export const validateUsername = (username: string): boolean => {
-  return /^[a-zA-Z0-9_]{3,20}$/.test(username);
-};
-
-export const validateAge = (birthdate: string): boolean => {
-  const birthDate = new Date(birthdate);
-  const today = new Date();
-  const age = today.getFullYear() - birthDate.getFullYear();
-  return age >= 13 && age <= 120;
-};
