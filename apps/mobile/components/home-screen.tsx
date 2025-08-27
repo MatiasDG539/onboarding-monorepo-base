@@ -5,7 +5,6 @@ import type { FC } from 'react';
 import { useRouter } from 'expo-router';
 
 const HomeScreen: FC = () => {
-
   const router = useRouter();
 
   return (
