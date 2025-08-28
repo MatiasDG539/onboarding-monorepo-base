@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import type { FC } from "react";
 import { Button } from "@repo/ui/button";
 import { useRouter } from "next/navigation";
+import { trpc } from "../lib/trpc";
 
 interface FormData {
   emailOrPhone: string;
@@ -46,6 +47,9 @@ const SignUpPage: FC = () => {
   });
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [isFormValid, setIsFormValid] = useState(false);
+
+  const registerMutation = trpc.auth.register.useMutation();
+  const sendEmailMutation = trpc.email.sendActivationEmail.useMutation();
 
   // Email validation regex
   const emailRegex = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/, []);
@@ -146,33 +150,36 @@ const SignUpPage: FC = () => {
     setIsFormValid(validateCurrentStep());
   }, [formData, currentStep, validateCurrentStep]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateCurrentStep()) {
       if (currentStep < 3) {
         setCurrentStep(currentStep + 1);
       } else {
         if (currentStep === 3) {
-          const emailToVerify = formData.emailOrPhone;
-
-          fetch("/api/sendEmail", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: emailToVerify }),
-          })
-            .then(res => {
-              if (!res.ok) {
-                throw new Error(`HTTP error! status: ${res.status}`);
-              }
-              return res.json();
-            })
-            .then(() => {
-              const encodedEmail = encodeURIComponent(emailToVerify);
-              router.push(`/auth/verify/email?email=${encodedEmail}`);
-            })
-            .catch(err => {
-              console.error("Error enviando código:", err);
-              alert("Error al enviar el código de verificación. Por favor, intenta de nuevo.");
+          try {
+            // Register user with tRPC
+            await registerMutation.mutateAsync({
+              emailOrPhone: formData.emailOrPhone,
+              password: formData.password,
+              firstName: formData.firstName,
+              lastName: formData.lastName,
+              username: formData.username,
+              phoneNumber: formData.phoneNumber,
+              birthdate: formData.birthdate,
+              profilePicture: formData.profilePicture,
             });
+
+            // Send verification email with tRPC
+            await sendEmailMutation.mutateAsync({
+              to: formData.emailOrPhone,
+            });
+
+            const encodedEmail = encodeURIComponent(formData.emailOrPhone);
+            router.push(`/auth/verify/email?email=${encodedEmail}`);
+          } catch (error) {
+            console.error("Error during registration or email sending:", error);
+            alert(`Error: ${error instanceof Error ? error.message : "Something went wrong. Please try again."}`);
+          }
         }
       }
     }
@@ -453,7 +460,6 @@ const SignUpPage: FC = () => {
             />
           </div>
           
-          {/* Progress Indicator */}
           <div className="flex justify-center space-x-2 mb-6">
             {[1, 2, 3].map((step) => (
               <div
@@ -468,7 +474,6 @@ const SignUpPage: FC = () => {
           </div>
         </div>
 
-        {/* Form Container */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {currentStep === 1 && renderStep1()}
           {currentStep === 2 && renderStep2()}

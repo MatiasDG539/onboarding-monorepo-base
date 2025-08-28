@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import type { FC } from "react";
 import { Button } from "@repo/ui/button";
 import { useRouter } from "next/navigation";
+import { trpc } from "../lib/trpc";
 
 interface VerifyEmailProps {
   email?: string;
@@ -19,6 +20,9 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  const verifyMutation = trpc.auth.verifyCode.useMutation();
+  const resendMutation = trpc.email.sendActivationEmail.useMutation();
 
   const isEmail = email.includes("@");
 
@@ -91,61 +95,15 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
     try {
       const enteredCode = code.join("");
 
-      const res = await fetch("/api/verifyCode", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code: enteredCode }),
+      await verifyMutation.mutateAsync({
+        email,
+        code: enteredCode,
       });
 
-      // Manejo de errores HTTP específicos
-      if (!res.ok) {
-        if (res.status === 400) {
-          setError("Invalid code. Please check and try again.");
-        } else if (res.status === 404) {
-          setError("Verification code not found. Please request a new one.");
-        } else if (res.status === 429) {
-          setError("Too many attempts. Please wait a moment and try again.");
-        } else if (res.status >= 500) {
-          setError("Server error. Please try again in a moment.");
-        } else {
-          setError("Something went wrong. Please try again.");
-        }
-        setCode(["", "", "", "", "", ""]);
-        inputRefs.current[0]?.focus();
-        return;
-      }
-
-      // Verificar si la respuesta es JSON válida
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        setError("Something went wrong. Please try again.");
-        return;
-      }
-
-      const data = await res.json();
-
-      if (data.success) {
-        router.push("/dashboard");
-      } else {
-        // Show specific server message or generic one
-        const errorMessage = data.error === "Invalid code" 
-          ? "Invalid code. Please check and try again."
-          : data.error || "Invalid code. Please try again.";
-        
-        setError(errorMessage);
-        setCode(["", "", "", "", "", ""]);
-        inputRefs.current[0]?.focus();
-      }
-    } catch (err) {
-      console.error("Error verifying code:", err);
-      
-      // Manejo de errores de red
-      if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError("Connection error. Please check your internet connection.");
-      } else {
-        setError("Something went wrong. Please try again.");
-      }
-      
+      router.push("/dashboard");
+    } catch (error) {
+      console.error("Error verifying code:", error);
+      setError(error instanceof Error ? error.message : "Invalid code. Please try again.");
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } finally {
@@ -158,40 +116,13 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
     if (!canResend) return;
 
     try {
-      const res = await fetch("/api/sendEmail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: email }),
-      });
-
-      if (!res.ok) {
-        if (res.status === 429) {
-          setError("Too many requests. Please wait before trying again.");
-        } else if (res.status >= 500) {
-          setError("Server error. Please try again in a moment.");
-        } else {
-          setError("Failed to resend code. Please try again.");
-        }
-        return;
-      }
-
-      const data = await res.json();
-      
-      if (data.success) {
-        setCanResend(false);
-        setResendTimer(60);
-        setError("");
-      } else {
-        setError("Failed to resend code. Please try again.");
-      }
-    } catch (err) {
-      console.error("Error resending code:", err);
-      
-      if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError("Connection error. Please check your internet connection.");
-      } else {
-        setError("Failed to resend code. Please try again.");
-      }
+      await resendMutation.mutateAsync({ to: email });
+      setCanResend(false);
+      setResendTimer(60);
+      setError("");
+    } catch (error) {
+      console.error("Error resending code:", error);
+      setError(error instanceof Error ? error.message : "Failed to resend code. Please try again.");
     }
   };
 

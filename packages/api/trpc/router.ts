@@ -1,14 +1,27 @@
 import { router } from './base';
 import { publicProcedure } from './base';
 import { sendEmail } from '../modules/email/procedures';
-import { verifyCode } from '../modules/auth/procedures';
+import { verifyCode, registerUser } from '../modules/auth/procedures';
 import { z } from 'zod';
 
-export const emailRouter: any = router({
+const sendEmailInput = z.object({ to: z.string().email() });
+const verifyCodeInput = z.object({ email: z.string().email(), code: z.string() });
+const registerInput = z.object({
+  emailOrPhone: z.string(),
+  password: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  username: z.string(),
+  phoneNumber: z.string(),
+  birthdate: z.string(),
+  profilePicture: z.any().optional(),
+});
+
+export const emailRouter = router({
   sendActivationEmail: publicProcedure
-    .input(z.object({ email: z.string().email() }))
-    .mutation(async ({ input }: { input: { email: string } }) => {
-      const result = await sendEmail(input.email);
+    .input(sendEmailInput)
+    .mutation(async ({ input }) => {
+      const result = await sendEmail(input.to);
       return {
         success: result.success,
         error: result.error,
@@ -17,19 +30,25 @@ export const emailRouter: any = router({
     }),
 });
 
-export const authRouter: any = router({
+export const authRouter = router({
   verifyCode: publicProcedure
-    .input(z.object({ email: z.string().email(), code: z.string() }))
-    .query(({ input }: { input: { email: string; code: string } }) => {
+    .input(verifyCodeInput)
+    .mutation(async ({ input }) => {
       const isValid = verifyCode(input.email, input.code);
       return {
         success: isValid,
         error: isValid ? undefined : 'Invalid verification code',
       };
     }),
+  register: publicProcedure
+    .input(registerInput)
+    .mutation(async ({ input }) => {
+      const result = registerUser(input);
+      return result;
+    }),
 });
 
-export const appRouter: any = router({
+export const appRouter = router({
   email: emailRouter,
   auth: authRouter,
 });

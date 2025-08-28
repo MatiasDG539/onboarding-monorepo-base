@@ -18,7 +18,7 @@ export async function sendEmail(to: string): Promise<{ success: boolean; error?:
 		const html = render(<ActivationEmail code={code} />);
 
 		await transporter.sendMail({
-			from: process.env.SMTP_FROM || "gutierrezmatiasdaniel539@gmail.com",
+			from: process.env.EMAIL_FROM || "gutierrezmatiasdaniel539@gmail.com",
 			to,
 			subject: "Activation code",
 			html,
