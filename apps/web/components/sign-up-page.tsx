@@ -113,14 +113,14 @@ const SignUpPage: FC = () => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Únete a TwitterClone</h2>
-        <p className="text-gray-600">Comencemos con tu {useEmail ? "email" : "teléfono"}</p>
+        <h2 className="text-2xl font-bold text-gray-900">Join TwitterClone</h2>
+        <p className="text-gray-600">Let&apos;s start with your {useEmail ? "email" : "phone"}</p>
       </div>
 
       <div className="space-y-4">
         <div>
           <label htmlFor="emailOrPhone" className="block text-sm font-medium text-gray-700 mb-2">
-            {useEmail ? "Email" : "Número de teléfono"}
+            {useEmail ? "Email" : "Phone number"}
           </label>
           <Controller
             control={emailOrPhoneForm.control}
@@ -157,7 +157,7 @@ const SignUpPage: FC = () => {
           }}
           className="text-[#00AAEC] hover:text-[#1DA1F2] font-medium transition-colors"
         >
-          {useEmail ? "Usar teléfono en su lugar" : "Usar email en su lugar"}
+          {useEmail ? "Use phone instead" : "Use email instead"}
         </button>
       </div>
     </div>
@@ -166,14 +166,14 @@ const SignUpPage: FC = () => {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Crea tu contraseña</h2>
-        <p className="text-gray-600">Asegúrate de que sea segura</p>
+        <h2 className="text-2xl font-bold text-gray-900">Create your password</h2>
+        <p className="text-gray-600">Make sure it&apos;s secure</p>
       </div>
 
       <div className="space-y-4">
         <div>
           <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-            Contraseña
+            Password
           </label>
 
           <Controller
@@ -187,7 +187,7 @@ const SignUpPage: FC = () => {
                   value={value}
                   onChange={onChange}
                   onBlur={onBlur}
-                  placeholder="Mínimo 8 caracteres"
+                  placeholder="Minimum 8 characters"
                   className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                     error
                       ? "border-red-300 focus:border-red-500"
@@ -204,7 +204,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-            Confirmar contraseña
+            Confirm password
           </label>
 
           <Controller
@@ -218,7 +218,7 @@ const SignUpPage: FC = () => {
                   value={value}
                   onChange={onChange}
                   onBlur={onBlur}
-                  placeholder="Repite tu contraseña"
+                  placeholder="Repeat your password"
                   className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                     error
                       ? "border-red-300 focus:border-red-500"
@@ -239,15 +239,15 @@ const SignUpPage: FC = () => {
   const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold text-gray-900">Cuéntanos sobre ti</h2>
-        <p className="text-gray-600">Completa tu perfil</p>
+        <h2 className="text-2xl font-bold text-gray-900">Tell us about yourself</h2>
+        <p className="text-gray-600">Complete your profile</p>
       </div>
 
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre
+              First name
             </label>
 
             <Controller
@@ -261,7 +261,7 @@ const SignUpPage: FC = () => {
                     value={value}
                     onChange={onChange}
                     onBlur={onBlur}
-                    placeholder="Tu nombre"
+                    placeholder="Your first name"
                     className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                       error
                         ? "border-red-300 focus:border-red-500"
@@ -278,7 +278,7 @@ const SignUpPage: FC = () => {
 
           <div>
             <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-              Apellido
+              Last name
             </label>
 
             <Controller
@@ -292,7 +292,7 @@ const SignUpPage: FC = () => {
                     value={value}
                     onChange={onChange}
                     onBlur={onBlur}
-                    placeholder="Tu apellido"
+                    placeholder="Your last name"
                     className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                       error
                         ? "border-red-300 focus:border-red-500"
@@ -310,7 +310,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-            Nombre de usuario
+            Username
           </label>
 
           <Controller
@@ -324,7 +324,7 @@ const SignUpPage: FC = () => {
                   value={value}
                   onChange={onChange}
                   onBlur={onBlur}
-                  placeholder="@tunombredeusuario"
+                  placeholder="@yourusername"
                   className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
                     error
                       ? "border-red-300 focus:border-red-500"
@@ -341,7 +341,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
-            Número de teléfono
+            Phone number
           </label>
           <Controller
             control={profileForm.control}
@@ -371,7 +371,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700 mb-2">
-            Fecha de nacimiento
+            Birthdate
           </label>
 
           <Controller
@@ -402,7 +402,7 @@ const SignUpPage: FC = () => {
 
         <div>
           <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700 mb-2">
-            Foto de perfil (opcional)
+            Profile picture (optional)
           </label>
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-r from-[#00AAEC] to-[#1DA1F2] rounded-full flex items-center justify-center overflow-hidden">
@@ -478,7 +478,7 @@ const SignUpPage: FC = () => {
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              {currentStep === 3 ? "Crear cuenta" : "Siguiente"}
+              {currentStep === 3 ? "Create account" : "Next"}
             </button>
 
             {currentStep > 1 && (
@@ -486,7 +486,7 @@ const SignUpPage: FC = () => {
                 onClick={handleBack}
                 className="w-full py-3 px-6 rounded-full font-bold text-lg border-2 border-gray-300 text-gray-700 hover:border-[#00AAEC] hover:text-[#00AAEC] transition-colors"
               >
-                Atrás
+                Back
               </button>
             )}
           </div>
@@ -495,9 +495,9 @@ const SignUpPage: FC = () => {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-gray-500 text-sm">
-            ¿Ya tienes una cuenta?{" "}
+            Already have an account?{" "}
             <a href="#" className="text-[#00AAEC] hover:text-[#1DA1F2] font-medium transition-colors">
-              Inicia sesión
+              Sign in
             </a>
           </p>
         </div>

@@ -5,7 +5,13 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "baseUrl": "./",
+    "paths": {
+      "@repo/forms/*": [
+        "./forms/*"
+      ]
+    }
   },
   "include": [
     "**/*.ts",
