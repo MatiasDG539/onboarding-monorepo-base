@@ -5,7 +5,11 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "paths": {
+      "@api/*": ["../../packages/api/*"],
+      "@api/trpc/*": ["../../packages/api/trpc/*"]
+    }
   },
   "include": [
     "**/*.ts",

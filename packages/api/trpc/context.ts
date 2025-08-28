@@ -1,16 +1,10 @@
-import type { CreateNextContextOptions } from '@trpc/server/adapters/next';
-
-export async function createContext(opts?: CreateNextContextOptions) {
+export async function createContext(opts?: { req?: any; res?: any } | undefined) {
   const { req, res } = opts || {};
 
   return {
     userId: undefined, // TODO: Implement authentication
     req,
     res,
-    // Add database connection here when available
-    // db: prisma,
-    // Add logging here when available
-    // logger: winston,
   };
 }
 

@@ -1,7 +1,8 @@
 import { codes } from "../../email/procedures/send-email";
 
 export function verifyCode(email: string, code: string): boolean {
-	const storedCode = codes.get(email);
+	const normalizedEmail = email.trim().toLowerCase();
+	const storedCode = codes.get(normalizedEmail);
 	if (!storedCode) {
 		return false;
 	}

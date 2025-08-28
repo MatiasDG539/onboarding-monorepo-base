@@ -35,9 +35,12 @@ export const authRouter = router({
     .input(verifyCodeInput)
     .mutation(async ({ input }) => {
       const isValid = verifyCode(input.email, input.code);
+      if (!isValid) {
+        throw new Error('Invalid verification code');
+      }
       return {
-        success: isValid,
-        error: isValid ? undefined : 'Invalid verification code',
+        success: true,
+        message: 'Code verified successfully',
       };
     }),
   register: publicProcedure
