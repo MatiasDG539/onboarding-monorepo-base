@@ -1,30 +1,38 @@
-export interface UserData {
-  emailOrPhone: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  phoneNumber: string;
-  birthdate: string;
-  profilePicture?: File;
-}
+import { z } from 'zod';
+import { router, publicProcedure } from '../../../trpc/base';
+
+
+type UserData = z.infer<typeof userDataSchema>;
 
 const users = new Map<string, UserData>();
 
-export function registerUser(userData: UserData): { success: boolean; error?: string; user?: UserData } {
-  if (users.has(userData.emailOrPhone) || users.has(userData.username)) {
-    return { success: false, error: 'User already exists' };
-  }
+const userDataSchema = z.object({
+  emailOrPhone: z.string(),
+  password: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  username: z.string(),
+  phoneNumber: z.string(),
+  birthdate: z.string(),
+  // profilePicture omitted for simplicity (File type not serializable)
+});
 
-  users.set(userData.emailOrPhone, userData);
-  users.set(userData.username, userData);
+export const authRouter = router({
+  register: publicProcedure
+    .input(userDataSchema)
+    .mutation(({ input }) => {
+      if (users.has(input.emailOrPhone) || users.has(input.username)) {
+        return { success: false, error: 'User already exists' };
+      }
+      users.set(input.emailOrPhone, input);
+      users.set(input.username, input);
+      return { success: true, user: input };
+    }),
 
-  return {
-    success: true,
-    user: userData
-  };
-}
-
-export function getUser(identifier: string): UserData | undefined {
-  return users.get(identifier);
-}
+  getUser: publicProcedure
+    .input(z.string())
+    .query(({ input }) => {
+      const user = users.get(input);
+      return user || null;
+    }),
+});
