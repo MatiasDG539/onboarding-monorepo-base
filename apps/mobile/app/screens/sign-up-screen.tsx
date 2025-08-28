@@ -19,8 +19,7 @@ import {
   type SignUpStep1Data,
   type SignUpStep2Data,
   type SignUpStep3Data,
-  type CompleteSignUpData
-} from '@repo/forms/schemas';
+} from '@/forms/schemas';
 
 interface SignUpPageProps {
   currentStep: number;
@@ -61,17 +60,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
     }
   });
 
-  const [formData, setFormData] = useState<CompleteSignUpData>({
-    emailOrPhone: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
-    username: "",
-    phoneNumber: "",
-    birthdate: "",
-    profilePicture: null,
-  });
 
   const pickImage = () => {
     Alert.alert(
@@ -96,24 +84,17 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
     if (currentStep === 1) {
       const isValid = await emailOrPhoneForm.trigger();
       if (isValid) {
-        const values = emailOrPhoneForm.getValues();
-        setFormData(prev => ({ ...prev, ...values }));
         setCurrentStep(currentStep + 1);
       }
     } else if (currentStep === 2) {
       const isValid = await passwordForm.trigger();
       if (isValid) {
-        const values = passwordForm.getValues();
-        setFormData(prev => ({ ...prev, ...values }));
         setCurrentStep(currentStep + 1);
       }
     } else if (currentStep === 3) {
       const isValid = await profileForm.trigger();
       if (isValid) {
-        const values = profileForm.getValues();
-        const finalData = { ...formData, ...values };
-        setFormData(finalData);
-        
+        // Final step, handle account creation
         Alert.alert(
           "Account Created", 
           "Your account has been created successfully!",
@@ -139,42 +120,32 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
             {useEmail ? "Email" : "Phone Number"}
           </Text>
-          <Controller
-            control={emailOrPhoneForm.control}
-            name="emailOrPhone"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder={useEmail ? "your@email.com" : "+1 234 567 8900"}
-                  keyboardType={useEmail ? "email-address" : "phone-pad"}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{
-                    width: '100%',
-                    fontSize: 16,
-                    paddingVertical: 16,
-                    paddingHorizontal: 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: error ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {error && (
-                  <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-                    {error.message}
-                  </Text>
-                )}
-              </>
-            )}
+          <TextInput
+            placeholder={useEmail ? "your@email.com" : "+1 234 567 8900"}
+            keyboardType={useEmail ? "email-address" : "phone-pad"}
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={{
+              width: '100%',
+              fontSize: 16,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: emailOrPhoneForm.formState.errors.emailOrPhone ? '#fca5a5' : '#e5e7eb',
+              backgroundColor: 'white',
+              color: '#111827',
+              height: 56,
+              textAlignVertical: 'center',
+            }}
+            placeholderTextColor="#9CA3AF"
+            {...emailOrPhoneForm.register("emailOrPhone")}
           />
+          {emailOrPhoneForm.formState.errors.emailOrPhone && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {emailOrPhoneForm.formState.errors.emailOrPhone.message}
+            </Text>
+          )}
         </View>
 
         <TouchableOpacity
@@ -209,84 +180,64 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
             Password
           </Text>
-          <Controller
-            control={passwordForm.control}
-            name="password"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="Minimum 8 characters"
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{
-                    width: '100%',
-                    fontSize: 16,
-                    paddingVertical: 16,
-                    paddingHorizontal: 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: error ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {error && (
-                  <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-                    {error.message}
-                  </Text>
-                )}
-              </>
-            )}
+          <TextInput
+            placeholder="Minimum 8 characters"
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={{
+              width: '100%',
+              fontSize: 16,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: passwordForm.formState.errors.password ? '#fca5a5' : '#e5e7eb',
+              backgroundColor: 'white',
+              color: '#111827',
+              height: 56,
+              textAlignVertical: 'center',
+            }}
+            placeholderTextColor="#9CA3AF"
+            {...passwordForm.register("password")}
           />
+          {passwordForm.formState.errors.password && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {passwordForm.formState.errors.password.message}
+            </Text>
+          )}
         </View>
 
         <View style={{ marginTop: 24 }}>
           <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
             Confirm Password
           </Text>
-          <Controller
-            control={passwordForm.control}
-            name="confirmPassword"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="Repeat your password"
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{
-                    width: '100%',
-                    fontSize: 16,
-                    paddingVertical: 16,
-                    paddingHorizontal: 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: error ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {error && (
-                  <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-                    {error.message}
-                  </Text>
-                )}
-              </>
-            )}
+          <TextInput
+            placeholder="Repeat your password"
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={{
+              width: '100%',
+              fontSize: 16,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: passwordForm.formState.errors.confirmPassword ? '#fca5a5' : '#e5e7eb',
+              backgroundColor: 'white',
+              color: '#111827',
+              height: 56,
+              textAlignVertical: 'center',
+            }}
+            placeholderTextColor="#9CA3AF"
+            {...passwordForm.register("confirmPassword")}
           />
+          {passwordForm.formState.errors.confirmPassword && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {passwordForm.formState.errors.confirmPassword.message}
+            </Text>
+          )}
         </View>
       </View>
     </View>
@@ -309,80 +260,60 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
               First Name
             </Text>
-            <Controller
-              control={profileForm.control}
-              name="firstName"
-              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                <>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    placeholder="Your first name"
-                    autoCapitalize="words"
-                    style={{
-                      flex: 1,
-                      fontSize: 16,
-                      paddingVertical: 16,
-                      paddingHorizontal: 16,
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderColor: error ? '#fca5a5' : '#e5e7eb',
-                      backgroundColor: 'white',
-                      color: '#111827',
-                      height: 56,
-                      textAlignVertical: 'center',
-                    }}
-                    placeholderTextColor="#9CA3AF"
-                  />
-                  {error && (
-                    <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-                      {error.message}
-                    </Text>
-                  )}
-                </>
-              )}
+            <TextInput
+              placeholder="Your first name"
+              autoCapitalize="words"
+              style={{
+                flex: 1,
+                fontSize: 16,
+                paddingVertical: 16,
+                paddingHorizontal: 16,
+                borderRadius: 12,
+                borderWidth: 2,
+                borderColor: profileForm.formState.errors.firstName ? '#fca5a5' : '#e5e7eb',
+                backgroundColor: 'white',
+                color: '#111827',
+                height: 56,
+                textAlignVertical: 'center',
+              }}
+              placeholderTextColor="#9CA3AF"
+              {...profileForm.register("firstName")}
             />
+            {profileForm.formState.errors.firstName && (
+              <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+                {profileForm.formState.errors.firstName.message}
+              </Text>
+            )}
           </View>
 
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
               Last Name
             </Text>
-            <Controller
-              control={profileForm.control}
-              name="lastName"
-              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                <>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    placeholder="Your last name"
-                    autoCapitalize="words"
-                    style={{
-                      flex: 1,
-                      fontSize: 16,
-                      paddingVertical: 16,
-                      paddingHorizontal: 16,
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderColor: error ? '#fca5a5' : '#e5e7eb',
-                      backgroundColor: 'white',
-                      color: '#111827',
-                      height: 56,
-                      textAlignVertical: 'center',
-                    }}
-                    placeholderTextColor="#9CA3AF"
-                  />
-                  {error && (
-                    <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-                      {error.message}
-                    </Text>
-                  )}
-                </>
-              )}
+            <TextInput
+              placeholder="Your last name"
+              autoCapitalize="words"
+              style={{
+                flex: 1,
+                fontSize: 16,
+                paddingVertical: 16,
+                paddingHorizontal: 16,
+                borderRadius: 12,
+                borderWidth: 2,
+                borderColor: profileForm.formState.errors.lastName ? '#fca5a5' : '#e5e7eb',
+                backgroundColor: 'white',
+                color: '#111827',
+                height: 56,
+                textAlignVertical: 'center',
+              }}
+              placeholderTextColor="#9CA3AF"
+              {...profileForm.register("lastName")}
             />
+            {profileForm.formState.errors.lastName && (
+              <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+                {profileForm.formState.errors.lastName.message}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -390,81 +321,61 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
             Username
           </Text>
-          <Controller
-            control={profileForm.control}
-            name="username"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="@yourusername"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{
-                    width: '100%',
-                    fontSize: 16,
-                    paddingVertical: 16,
-                    paddingHorizontal: 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: error ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {error && (
-                  <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-                    {error.message}
-                  </Text>
-                )}
-              </>
-            )}
+          <TextInput
+            placeholder="@yourusername"
+            autoCapitalize="none"
+            autoCorrect={false}
+            style={{
+              width: '100%',
+              fontSize: 16,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: profileForm.formState.errors.username ? '#fca5a5' : '#e5e7eb',
+              backgroundColor: 'white',
+              color: '#111827',
+              height: 56,
+              textAlignVertical: 'center',
+            }}
+            placeholderTextColor="#9CA3AF"
+            {...profileForm.register("username")}
           />
+          {profileForm.formState.errors.username && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {profileForm.formState.errors.username.message}
+            </Text>
+          )}
         </View>
 
         <View style={{ marginTop: 24 }}>
           <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
             Phone Number
           </Text>
-          <Controller
-            control={profileForm.control}
-            name="phoneNumber"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="+1 234 567 8900"
-                  keyboardType="phone-pad"
-                  style={{
-                    width: '100%',
-                    fontSize: 16,
-                    paddingVertical: 16,
-                    paddingHorizontal: 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: error ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {error && (
-                  <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
-                    {error.message}
-                  </Text>
-                )}
-              </>
-            )}
+          <TextInput
+            placeholder="+1 234 567 8900"
+            keyboardType="phone-pad"
+            style={{
+              width: '100%',
+              fontSize: 16,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: profileForm.formState.errors.phoneNumber ? '#fca5a5' : '#e5e7eb',
+              backgroundColor: 'white',
+              color: '#111827',
+              height: 56,
+              textAlignVertical: 'center',
+            }}
+            placeholderTextColor="#9CA3AF"
+            {...profileForm.register("phoneNumber")}
           />
+          {profileForm.formState.errors.phoneNumber && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {profileForm.formState.errors.phoneNumber.message}
+            </Text>
+          )}
         </View>
 
         <View style={{ marginTop: 24 }}>
@@ -559,6 +470,7 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
         }}
       >
         <View style={{ flex: 1, justifyContent: 'center' }}>
+
           {/* Header */}
           <View style={{ marginBottom: 24 }}>
             <View style={{ alignItems: 'center', marginBottom: 16 }}>

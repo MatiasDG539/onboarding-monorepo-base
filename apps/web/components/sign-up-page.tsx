@@ -8,12 +8,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { 
   SignUpStep1Schema, 
   SignUpStep2Schema, 
-  SignUpStep3Schema,
-  type SignUpStep1Data,
-  type SignUpStep2Data,
-  type SignUpStep3Data,
-  type CompleteSignUpData
+  SignUpStep3Schema
 } from '@repo/forms/schemas';
+import type { SignUpStep1Data, SignUpStep2Data, SignUpStep3Data } from '@repo/forms/schemas';
+
 const SignUpPage: FC = () => {
   const [useEmail, setUseEmail] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
@@ -48,21 +46,8 @@ const SignUpPage: FC = () => {
     }
   });
 
-  const [formData, setFormData] = useState<CompleteSignUpData>({
-    emailOrPhone: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
-    username: "",
-    phoneNumber: "",
-    birthdate: "",
-    profilePicture: null,
-  });
-
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData((prev: CompleteSignUpData) => ({ ...prev, profilePicture: file }));
     if (file) {
       profileForm.setValue('profilePicture', file);
     }
@@ -83,23 +68,17 @@ const SignUpPage: FC = () => {
     if (currentStep === 1) {
       const isValid = await emailOrPhoneForm.trigger();
       if (isValid) {
-        const values = emailOrPhoneForm.getValues();
-        setFormData((prev: CompleteSignUpData) => ({ ...prev, ...values }));
-        setCurrentStep(currentStep + 1);
+      setCurrentStep(currentStep + 1);
       }
     } else if (currentStep === 2) {
       const isValid = await passwordForm.trigger();
       if (isValid) {
-        const values = passwordForm.getValues();
-        setFormData((prev: CompleteSignUpData) => ({ ...prev, ...values }));
-        setCurrentStep(currentStep + 1);
+      setCurrentStep(currentStep + 1);
       }
     } else if (currentStep === 3) {
       const isValid = await profileForm.trigger();
       if (isValid) {
-        const values = profileForm.getValues();
-        const finalData = { ...formData, ...values };
-        setFormData(finalData);
+      // Final step, handle account creation
       }
     }
   };
@@ -122,30 +101,22 @@ const SignUpPage: FC = () => {
           <label htmlFor="emailOrPhone" className="block text-sm font-medium text-gray-700 mb-2">
             {useEmail ? "Email" : "Phone number"}
           </label>
-          <Controller
-            control={emailOrPhoneForm.control}
-            name="emailOrPhone"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <input
-                  type={useEmail ? "email" : "tel"}
-                  id="emailOrPhone"
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder={useEmail ? "tu@email.com" : "+1 234 567 8900"}
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500 ${
-                    error
-                      ? "border-red-300 focus:border-red-500"
-                      : "border-gray-200 focus:border-[#00AAEC]"
-                  }`}
-                />
-                {error && (
-                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
-                )}
-              </>
-            )}
+          <input
+            type={useEmail ? "email" : "tel"}
+            id="emailOrPhone"
+            placeholder={useEmail ? "tu@email.com" : "+1 234 567 8900"}
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500 ${
+              emailOrPhoneForm.formState.errors.emailOrPhone
+                ? "border-red-300 focus:border-red-500"
+                : "border-gray-200 focus:border-[#00AAEC]"
+            }`}
+            {...emailOrPhoneForm.register("emailOrPhone")}
           />
+          {emailOrPhoneForm.formState.errors.emailOrPhone && (
+            <p className="mt-1 text-sm text-red-600">
+              {emailOrPhoneForm.formState.errors.emailOrPhone.message}
+            </p>
+          )}
         </div>
 
         <button
@@ -176,30 +147,22 @@ const SignUpPage: FC = () => {
             Password
           </label>
 
-          <Controller
-            control={passwordForm.control}
-            name="password"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <input
-                  type="password"
-                  id="password"
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="Minimum 8 characters"
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-                    error
-                      ? "border-red-300 focus:border-red-500"
-                      : "border-gray-200 focus:border-[#00AAEC]"
-                  }`}
-                />
-                {error && (
-                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
-                )}
-              </>
-            )}
+          <input
+            type="password"
+            id="password"
+            placeholder="Minimum 8 characters"
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+              passwordForm.formState.errors.password
+                ? "border-red-300 focus:border-red-500"
+                : "border-gray-200 focus:border-[#00AAEC]"
+            }`}
+            {...passwordForm.register("password")}
           />
+          {passwordForm.formState.errors.password && (
+            <p className="mt-1 text-sm text-red-600">
+              {passwordForm.formState.errors.password.message}
+            </p>
+          )}
         </div>
 
         <div>
@@ -207,30 +170,22 @@ const SignUpPage: FC = () => {
             Confirm password
           </label>
 
-          <Controller
-            control={passwordForm.control}
-            name="confirmPassword"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <input
-                  type="password"
-                  id="confirmPassword"
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="Repeat your password"
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-                    error
-                      ? "border-red-300 focus:border-red-500"
-                      : "border-gray-200 focus:border-[#00AAEC]"
-                  }`}
-                />
-                {error && (
-                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
-                )}
-              </>
-            )}
+          <input
+            type="password"
+            id="confirmPassword"
+            placeholder="Repeat your password"
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+              passwordForm.formState.errors.confirmPassword
+                ? "border-red-300 focus:border-red-500"
+                : "border-gray-200 focus:border-[#00AAEC]"
+            }`}
+            {...passwordForm.register("confirmPassword")}
           />
+          {passwordForm.formState.errors.confirmPassword && (
+            <p className="mt-1 text-sm text-red-600">
+              {passwordForm.formState.errors.confirmPassword.message}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -250,30 +205,22 @@ const SignUpPage: FC = () => {
               First name
             </label>
 
-            <Controller
-              control={profileForm.control}
-              name="firstName"
-              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                <>
-                  <input
-                    type="text"
-                    id="firstName"
-                    value={value}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    placeholder="Your first name"
-                    className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-                      error
-                        ? "border-red-300 focus:border-red-500"
-                        : "border-gray-200 focus:border-[#00AAEC]"
-                    }`}
-                  />
-                  {error && (
-                    <p className="mt-1 text-sm text-red-600">{error.message}</p>
-                  )}
-                </>
-              )}
+            <input
+              type="text"
+              id="firstName"
+              placeholder="Your first name"
+              className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                profileForm.formState.errors.firstName
+                  ? "border-red-300 focus:border-red-500"
+                  : "border-gray-200 focus:border-[#00AAEC]"
+              }`}
+              {...profileForm.register("firstName")}
             />
+            {profileForm.formState.errors.firstName && (
+              <p className="mt-1 text-sm text-red-600">
+                {profileForm.formState.errors.firstName.message}
+              </p>
+            )}
           </div>
 
           <div>
@@ -281,30 +228,22 @@ const SignUpPage: FC = () => {
               Last name
             </label>
 
-            <Controller
-              control={profileForm.control}
-              name="lastName"
-              render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-                <>
-                  <input
-                    type="text"
-                    id="lastName"
-                    value={value}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    placeholder="Your last name"
-                    className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-                      error
-                        ? "border-red-300 focus:border-red-500"
-                        : "border-gray-200 focus:border-[#00AAEC]"
-                    }`}
-                  />
-                  {error && (
-                    <p className="mt-1 text-sm text-red-600">{error.message}</p>
-                  )}
-                </>
-              )}
+            <input
+              type="text"
+              id="lastName"
+              placeholder="Your last name"
+              className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+                profileForm.formState.errors.lastName
+                  ? "border-red-300 focus:border-red-500"
+                  : "border-gray-200 focus:border-[#00AAEC]"
+              }`}
+              {...profileForm.register("lastName")}
             />
+            {profileForm.formState.errors.lastName && (
+              <p className="mt-1 text-sm text-red-600">
+                {profileForm.formState.errors.lastName.message}
+              </p>
+            )}
           </div>
         </div>
 
@@ -313,60 +252,44 @@ const SignUpPage: FC = () => {
             Username
           </label>
 
-          <Controller
-            control={profileForm.control}
-            name="username"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <input
-                  type="text"
-                  id="username"
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="@yourusername"
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-                    error
-                      ? "border-red-300 focus:border-red-500"
-                      : "border-gray-200 focus:border-[#00AAEC]"
-                  }`}
-                />
-                {error && (
-                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
-                )}
-              </>
-            )}
+          <input
+            type="text"
+            id="username"
+            placeholder="@yourusername"
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+              profileForm.formState.errors.username
+                ? "border-red-300 focus:border-red-500"
+                : "border-gray-200 focus:border-[#00AAEC]"
+            }`}
+            {...profileForm.register("username")}
           />
+          {profileForm.formState.errors.username && (
+            <p className="mt-1 text-sm text-red-600">
+              {profileForm.formState.errors.username.message}
+            </p>
+          )}
         </div>
 
         <div>
           <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-2">
             Phone number
           </label>
-          <Controller
-            control={profileForm.control}
-            name="phoneNumber"
-            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
-              <>
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  value={value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  placeholder="+1 234 567 8900"
-                  className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
-                    error
-                      ? "border-red-300 focus:border-red-500"
-                      : "border-gray-200 focus:border-[#00AAEC]"
-                  }`}
-                />
-                {error && (
-                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
-                )}
-              </>
-            )}
+          <input
+            type="tel"
+            id="phoneNumber"
+            placeholder="+1 234 567 8900"
+            className={`w-full px-4 py-3 rounded-lg border-2 transition-colors focus:outline-hidden focus:ring-0 bg-white text-gray-900 placeholder:text-gray-500${
+              profileForm.formState.errors.phoneNumber
+                ? "border-red-300 focus:border-red-500"
+                : "border-gray-200 focus:border-[#00AAEC]"
+            }`}
+            {...profileForm.register("phoneNumber")}
           />
+          {profileForm.formState.errors.phoneNumber && (
+            <p className="mt-1 text-sm text-red-600">
+              {profileForm.formState.errors.phoneNumber.message}
+            </p>
+          )}
         </div>
 
         <div>
@@ -406,9 +329,9 @@ const SignUpPage: FC = () => {
           </label>
           <div className="flex items-center space-x-4">
             <div className="w-16 h-16 bg-gradient-to-r from-[#00AAEC] to-[#1DA1F2] rounded-full flex items-center justify-center overflow-hidden">
-              {formData.profilePicture ? (
+              {profileForm.watch("profilePicture") ? (
                 <Image
-                  src={URL.createObjectURL(formData.profilePicture)}
+                  src={URL.createObjectURL(profileForm.watch("profilePicture"))}
                   alt="Preview"
                   width={64}
                   height={64}
@@ -504,6 +427,6 @@ const SignUpPage: FC = () => {
       </div>
     </div>
   );
-};
+}
 
 export default SignUpPage;
