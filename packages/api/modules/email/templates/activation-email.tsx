@@ -5,7 +5,7 @@ interface ActivationEmailProps {
   code: string;
 }
 
-export const ActivationEmail = ({ code }: ActivationEmailProps): JSX.Element => {
+export const ActivationEmail = ({ code }: ActivationEmailProps): React.JSX.Element => {
   return (
     <Html lang="es">
       <h1>Bienvenido 👋</h1>
