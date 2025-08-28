@@ -22,8 +22,8 @@ export default function VerifyEmailScreen() {
   const isSmallDevice = width < 375;
   const isLargeDevice = width > 414;
   const isLandscape = width > height;
-  const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
-  const [error, setError] = useState<string>('');
+  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const [error, setError] = useState('');
   const [isComplete, setIsComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
