@@ -12,17 +12,16 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { trpc } from '../../lib/trpc';
 import Svg, { Path } from 'react-native-svg';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
   const { email = "user@example.com" } = useLocalSearchParams<{ email: string }>();
   const { width, height } = useWindowDimensions();
-  
   const isSmallDevice = width < 375;
   const isLargeDevice = width > 414;
   const isLandscape = width > height;
-  
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
   const [error, setError] = useState<string>('');
   const [isComplete, setIsComplete] = useState(false);
@@ -30,12 +29,13 @@ export default function VerifyEmailScreen() {
   const [resendTimer, setResendTimer] = useState(0);
   const [canResend, setCanResend] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
-  
   const shakeAnimation = useRef(new Animated.Value(0)).current;
   const fadeAnimation = useRef(new Animated.Value(0)).current;
 
+  const verifyCodeMutation = trpc.auth.verifyCode.useMutation();
+  const sendEmailMutation = trpc.email.sendActivationEmail.useMutation();
+
   const isEmail = email.includes('@');
-  
   const maskedContact = isEmail 
     ? email.replace(/(.{2})(.*)(@.*)/, '$1***$3')
     : email.replace(/(\+?\d{1,3})(\d{3,})(\d{4})/, '$1***$3');
@@ -107,62 +107,34 @@ export default function VerifyEmailScreen() {
     const codeToVerify = verificationCode || code.join('');
     setIsLoading(true);
     setError('');
-    
+
     try {
-      const response = await fetch("http://localhost:3001/api/verifyCode", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, code: codeToVerify }),
+      const result = await verifyCodeMutation.mutateAsync({
+        email,
+        code: codeToVerify,
       });
 
-      if (!response.ok) {
-        if (response.status === 400) {
-          setError("Invalid code. Please check and try again.");
-        } else if (response.status === 404) {
-          setError("Verification code not found. Please request a new one.");
-        } else if (response.status === 429) {
-          setError("Too many attempts. Please wait a moment and try again.");
-        } else if (response.status >= 500) {
-          setError("Server error. Please try again in a moment.");
-        } else {
-          setError("Something went wrong. Please try again.");
-        }
-        setCode(['', '', '', '', '', '']);
-        triggerShakeAnimation();
-        setTimeout(() => inputRefs.current[0]?.focus(), 100);
-        return;
-      }
-
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        setError("Something went wrong. Please try again.");
-        return;
-      }
-
-      const data = await response.json();
-
-      if (data.success) {
+      if (result.success) {
         router.replace('/(tabs)');
       } else {
-        
-        const errorMessage = data.error === "Invalid code" 
-          ? "Invalid code. Please check and try again."
-          : data.error || "Invalid code. Please try again.";
-        
-        setError(errorMessage);
+        setError("Invalid code. Please check and try again.");
         setCode(['', '', '', '', '', '']);
         triggerShakeAnimation();
         setTimeout(() => inputRefs.current[0]?.focus(), 100);
       }
     } catch (err) {
       console.error('Verification error:', err);
-      
-      if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError("Connection error. Please check your internet connection.");
+
+      if (err instanceof Error) {
+        if (err.message.includes('Invalid verification code')) {
+          setError("Invalid code. Please check and try again.");
+        } else {
+          setError("Something went wrong. Please try again.");
+        }
       } else {
-        setError("Something went wrong. Please try again.");
+        setError("Connection error. Please check your internet connection.");
       }
-      
+
       setCode(['', '', '', '', '', '']);
       triggerShakeAnimation();
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
@@ -173,43 +145,28 @@ export default function VerifyEmailScreen() {
 
   const handleResend = async () => {
     if (!canResend) return;
-    
+
     try {
-      const response = await fetch("http://localhost:3001/api/sendEmail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: email }),
+      const result = await sendEmailMutation.mutateAsync({
+        to: email,
       });
 
-      if (!response.ok) {
-        if (response.status === 429) {
-          setError("Too many requests. Please wait before trying again.");
-        } else if (response.status >= 500) {
-          setError("Server error. Please try again in a moment.");
-        } else {
-          setError("Failed to resend code. Please try again.");
-        }
-        return;
-      }
-
-      const data = await response.json();
-      
-      if (data.success) {
+      if (result.success) {
         setResendTimer(60);
         setCanResend(false);
         setCode(['', '', '', '', '', '']);
         setError('');
         inputRefs.current[0]?.focus();
       } else {
-        setError("Failed to resend code. Please try again.");
+        setError(result.error || "Failed to resend code. Please try again.");
       }
     } catch (err) {
       console.error('Resend error:', err);
-      
-      if (err instanceof TypeError && err.message.includes("fetch")) {
-        setError("Connection error. Please check your internet connection.");
-      } else {
+
+      if (err instanceof Error) {
         setError("Failed to resend code. Please try again.");
+      } else {
+        setError("Connection error. Please check your internet connection.");
       }
     }
   };

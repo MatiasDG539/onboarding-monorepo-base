@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { useNavigation, useRouter } from 'expo-router';
+import { trpc } from '../../lib/trpc';
 
 interface FormData {
   emailOrPhone: string;
@@ -58,28 +59,30 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
   });
 
   const navigation = useNavigation();
+
   const router = useRouter();
+
   const { width, height } = useWindowDimensions();
-  
-  // Responsive breakpoints
+
   const isSmallDevice = width < 375;
+
   const isTablet = width >= 768;
+
   const isLandscape = width > height;
 
   const [errors, setErrors] = useState<ValidationErrors>({});
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
   // Email validation regex
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  
   // Phone validation regex
   const phoneRegex = /^\+?[\d\s\-()]{10,15}$/;
-
   // Username validation (alphanumeric + underscore, 3-20 chars)
+
+  const sendEmailMutation = trpc.email.sendActivationEmail.useMutation();
   const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
 
-  // Date helper functions
   const formatDate = (date: Date): string => {
     const year = date.getFullYear();
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -143,6 +146,7 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             borderTopRightRadius: 20,
             paddingBottom: Platform.OS === 'ios' ? 40 : 20,
           }}>
+
             {/* Header */}
             <View style={{
               flexDirection: 'row',
@@ -163,7 +167,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               </TouchableOpacity>
             </View>
 
-            {/* Date Picker Content */}
             <View style={{ 
               padding: 20,
               gap: 16
@@ -178,7 +181,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
                 {formatDateForDisplay(tempDate)}
               </Text>
 
-              {/* Year Picker */}
               <View>
                 <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
                   Year
@@ -212,7 +214,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
                 </ScrollView>
               </View>
 
-              {/* Month Picker */}
               <View>
                 <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
                   Month
@@ -247,7 +248,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
                 </ScrollView>
               </View>
 
-              {/* Day Picker */}
               <View>
                 <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
                   Day
@@ -399,30 +399,35 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
       if (currentStep < 3) {
         setCurrentStep(currentStep + 1);
       } else {
-        // Enviar código de verificación al completar el registro
-        const emailToVerify = useEmail ? formData.emailOrPhone : formData.emailOrPhone;
         
-        try {
-          const response = await fetch("http://localhost:3001/api/sendEmail", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: emailToVerify }),
-          });
+        const emailToVerify = useEmail ? formData.emailOrPhone : formData.emailOrPhone;
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-
-          const data = await response.json();
+        if (useEmail) {
           
-          if (data.success) {
-            router.push(`/verify-email?email=${encodeURIComponent(emailToVerify)}`);
-          } else {
-            Alert.alert("Error", "Error al enviar el código de verificación. Por favor, intenta de nuevo.");
+          if (!emailRegex.test(emailToVerify)) {
+            Alert.alert("Error", "Por favor ingresa un email válido.");
+            return;
           }
-        } catch (error) {
-          console.error("Error enviando código:", error);
-          Alert.alert("Error", "Error al enviar el código de verificación. Por favor, intenta de nuevo.");
+          try {
+            const result = await sendEmailMutation.mutateAsync({
+              to: emailToVerify,
+            });
+            if (result.success) {
+              router.push(`/verify-email?email=${encodeURIComponent(emailToVerify)}`);
+            } else {
+              Alert.alert("Error", result.error || "Error al enviar el código de verificación. Por favor, intenta de nuevo.");
+            }
+          } catch (error: any) {
+            
+            if (error?.message?.includes('Invalid email')) {
+              Alert.alert("Error", "Por favor ingresa un email válido.");
+            } else {
+              Alert.alert("Error", "Error al enviar el código de verificación. Por favor, intenta de nuevo.");
+            }
+            console.error("Error enviando código:", error);
+          }
+        } else {
+          Alert.alert("Error", "Solo se soporta verificación por email en esta versión.");
         }
       }
     }
