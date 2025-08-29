@@ -10,8 +10,8 @@ import {
   SignUpStep1Schema, 
   SignUpStep2Schema, 
   SignUpStep3Schema
-} from '@repo/forms/schemas';
-import type { SignUpStep1Data, SignUpStep2Data, SignUpStep3Data } from '@repo/forms/schemas';
+} from 'components/forms/schemas';
+import type { SignUpStep1Data, SignUpStep2Data, SignUpStep3Data } from 'components/forms/schemas';
 
 const SignUp: FC = () => {
   const [useEmail, setUseEmail] = useState(true);

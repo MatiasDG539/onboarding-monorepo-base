@@ -10,11 +10,6 @@ const config = getDefaultConfig(projectRoot)
 // Add the additional `cjs` extension to the resolver
 config.resolver.sourceExts.push("cjs");
 
-// Alias for forms
-config.resolver.extraNodeModules = {
-    ...config.resolver.extraNodeModules,
-    '@repo/forms': path.resolve(projectRoot, 'forms'),
-};
 
 // 1. Watch all files within the monorepo
 config.watchFolders = [workspaceRoot];

@@ -19,7 +19,7 @@ import {
   type SignUpStep1Data,
   type SignUpStep2Data,
   type SignUpStep3Data,
-} from '@/forms/schemas';
+} from '@/components/forms/schemas';
 
 interface SignUpScreenProps {
   currentStep: number;
