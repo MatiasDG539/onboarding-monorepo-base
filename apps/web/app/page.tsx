@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import type { FC } from "react";
-import LandingPage from "../components/LandingPage";
+import LandingPage from "../components/landing-page";
 
 const Home: FC = () => {
   const [showSplash, setShowSplash] = useState(true);
@@ -11,14 +11,14 @@ const Home: FC = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowSplash(false);
-    }, 3000); // Shows splash screen for 3 seconds
+    }, 1500); // Shows splash screen for 1.5 seconds
 
     return () => clearTimeout(timer);
   }, []);
 
   if (showSplash) {
     return (
-      <div className="fixed inset-0 w-full h-screen bg-gradient-to-br from-[#00AAEC] to-[#1DA1F2] flex items-center justify-center z-50">
+      <div className="fixed inset-0 w-full h-screen bg-linear-to-br from-[#00AAEC] to-[#1DA1F2] flex items-center justify-center z-50">
         <div className="flex flex-col items-center">
           <Image
             src="/twitter_logo.svg"

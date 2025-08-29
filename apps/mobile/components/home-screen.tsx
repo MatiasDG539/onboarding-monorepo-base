@@ -2,8 +2,11 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import type { FC } from 'react';
+import { useRouter } from 'expo-router';
 
-const LandingPage: FC = () => {
+const HomeScreen: FC = () => {
+  const router = useRouter();
+
   return (
     <ScrollView className="flex-1 bg-slate-50">
       <View className="h-12"></View>
@@ -40,13 +43,17 @@ const LandingPage: FC = () => {
             </Text>
           </View>
           
-          <View className="mb-4 px-4">
-            <TouchableOpacity className="bg-[#00AAEC] py-3 px-6 rounded-full">
+            <View className="mb-4 px-4">
+            <TouchableOpacity 
+              className="bg-[#00AAEC] py-3 px-6 rounded-full"
+              onPress={() => router.push('/sign-up')}
+              activeOpacity={0.8}
+            >
               <Text className="text-white font-bold text-base text-center">
-                Get Started
+              Get Started
               </Text>
             </TouchableOpacity>
-          </View>
+            </View>
           
         </View>
 
@@ -104,4 +111,4 @@ const LandingPage: FC = () => {
   );
 };
 
-export default LandingPage;
+export default HomeScreen;
