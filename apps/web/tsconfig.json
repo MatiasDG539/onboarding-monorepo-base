@@ -8,8 +8,10 @@
     ],
     "paths": {
       "@api/*": ["../../packages/api/*"],
-      "@api/trpc/*": ["../../packages/api/trpc/*"]
-    }
+      "@api/trpc/*": ["../../packages/api/trpc/*"],
+      "@repo/forms/*": ["components/forms/*"]
+    },
+    "baseUrl": "./",
   },
   "include": [
     "**/*.ts",

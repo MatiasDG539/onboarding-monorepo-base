@@ -12,360 +12,57 @@ import {
   Modal
 } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
-import { useNavigation, useRouter } from 'expo-router';
-import { trpc } from '../../lib/trpc';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { 
+  SignUpStep1Schema, 
+  SignUpStep2Schema, 
+  SignUpStep3Schema,
+  type SignUpStep1Data,
+  type SignUpStep2Data,
+  type SignUpStep3Data,
+} from '@/components/forms/schemas';
 
-interface FormData {
-  emailOrPhone: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  lastName: string;
-  username: string;
-  phoneNumber: string;
-  birthdate: string;
-  profilePicture: string | null;
-}
-
-interface ValidationErrors {
-  emailOrPhone?: string;
-  password?: string;
-  confirmPassword?: string;
-  firstName?: string;
-  lastName?: string;
-  username?: string;
-  phoneNumber?: string;
-  birthdate?: string;
-}
-
-interface SignUpPageProps {
+interface SignUpScreenProps {
   currentStep: number;
   setCurrentStep: (step: number) => void;
   onBack?: () => void;
 }
 
-export default function SignUpPage({ currentStep, setCurrentStep, onBack }: SignUpPageProps) {
+export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: SignUpScreenProps) {
   const [useEmail, setUseEmail] = useState(true);
-  const [formData, setFormData] = useState<FormData>({
-    emailOrPhone: "",
-    password: "",
-    confirmPassword: "",
-    firstName: "",
-    lastName: "",
-    username: "",
-    phoneNumber: "",
-    birthdate: "",
-    profilePicture: null,
+
+  const emailOrPhoneForm = useForm<SignUpStep1Data>({
+    resolver: zodResolver(SignUpStep1Schema),
+    mode: 'onChange',
+    defaultValues: {
+      emailOrPhone: "",
+    }
   });
 
-  const navigation = useNavigation();
-
-  const router = useRouter();
-
-  const { width, height } = useWindowDimensions();
-
-  const isSmallDevice = width < 375;
-
-  const isTablet = width >= 768;
-
-  const isLandscape = width > height;
-
-  const [errors, setErrors] = useState<ValidationErrors>({});
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  // Email validation regex
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  // Phone validation regex
-  const phoneRegex = /^\+?[\d\s\-()]{10,15}$/;
-  // Username validation (alphanumeric + underscore, 3-20 chars)
-
-  const sendEmailMutation = trpc.email.sendActivationEmail.useMutation();
-  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
-
-  const formatDate = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  const formatDateForDisplay = (date: Date) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    };
-    return date.toLocaleDateString('en-US', options);
-  };
-
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-    const formattedDate = formatDate(date);
-    handleInputChange("birthdate", formattedDate);
-    setShowDatePicker(false);
-  };
-
-  const openDatePicker = () => {
-    setShowDatePicker(true);
-  };
-
-  const DatePickerModal = () => {
-    const [tempDate, setTempDate] = useState(selectedDate || new Date(2000, 0, 1));
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 100 }, (_, i) => currentYear - 13 - i);
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    const days = Array.from({ length: 31 }, (_, i) => i + 1);
-
-    const handleConfirm = () => {
-      handleDateSelect(tempDate);
-    };
-
-    const handleCancel = () => {
-      setShowDatePicker(false);
-    };
-
-    return (
-      <Modal
-        visible={showDatePicker}
-        transparent
-        animationType="slide"
-        onRequestClose={handleCancel}
-      >
-        <View style={{
-          flex: 1,
-          justifyContent: 'flex-end',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)'
-        }}>
-          <View style={{
-            backgroundColor: 'white',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-          }}>
-
-            {/* Header */}
-            <View style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: 20,
-              borderBottomWidth: 1,
-              borderBottomColor: '#e5e7eb'
-            }}>
-              <TouchableOpacity onPress={handleCancel}>
-                <Text style={{ color: '#6b7280', fontSize: 16 }}>Cancel</Text>
-              </TouchableOpacity>
-              <Text style={{ fontSize: 18, fontWeight: '600', color: '#111827' }}>
-                Select Birth Date
-              </Text>
-              <TouchableOpacity onPress={handleConfirm}>
-                <Text style={{ color: '#00AAEC', fontSize: 16, fontWeight: '600' }}>Done</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ 
-              padding: 20,
-              gap: 16
-            }}>
-              <Text style={{
-                fontSize: 16,
-                fontWeight: '500',
-                color: '#374151',
-                textAlign: 'center',
-                marginBottom: 8
-              }}>
-                {formatDateForDisplay(tempDate)}
-              </Text>
-
-              <View>
-                <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
-                  Year
-                </Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
-                >
-                  {years.map(year => (
-                    <TouchableOpacity
-                      key={year}
-                      onPress={() => setTempDate(new Date(year, tempDate.getMonth(), tempDate.getDate()))}
-                      style={{
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: 8,
-                        backgroundColor: tempDate.getFullYear() === year ? '#00AAEC' : '#f3f4f6',
-                        minWidth: 60,
-                        alignItems: 'center'
-                      }}
-                    >
-                      <Text style={{
-                        color: tempDate.getFullYear() === year ? 'white' : '#374151',
-                        fontWeight: tempDate.getFullYear() === year ? '600' : '400'
-                      }}>
-                        {year}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              <View>
-                <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
-                  Month
-                </Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
-                >
-                  {months.map((month, index) => (
-                    <TouchableOpacity
-                      key={month}
-                      onPress={() => setTempDate(new Date(tempDate.getFullYear(), index, tempDate.getDate()))}
-                      style={{
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                        borderRadius: 8,
-                        backgroundColor: tempDate.getMonth() === index ? '#00AAEC' : '#f3f4f6',
-                        minWidth: 80,
-                        alignItems: 'center'
-                      }}
-                    >
-                      <Text style={{
-                        color: tempDate.getMonth() === index ? 'white' : '#374151',
-                        fontWeight: tempDate.getMonth() === index ? '600' : '400',
-                        fontSize: 13
-                      }}>
-                        {month}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-
-              <View>
-                <Text style={{ fontSize: 14, fontWeight: '500', color: '#6b7280', marginBottom: 8 }}>
-                  Day
-                </Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
-                >
-                  {days.map(day => {
-                    const daysInMonth = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
-                    if (day > daysInMonth) return null;
-                    
-                    return (
-                      <TouchableOpacity
-                        key={day}
-                        onPress={() => setTempDate(new Date(tempDate.getFullYear(), tempDate.getMonth(), day))}
-                        style={{
-                          paddingHorizontal: 12,
-                          paddingVertical: 8,
-                          borderRadius: 8,
-                          backgroundColor: tempDate.getDate() === day ? '#00AAEC' : '#f3f4f6',
-                          minWidth: 40,
-                          alignItems: 'center'
-                        }}
-                      >
-                        <Text style={{
-                          color: tempDate.getDate() === day ? 'white' : '#374151',
-                          fontWeight: tempDate.getDate() === day ? '600' : '400'
-                        }}>
-                          {day}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    );
-  };
-
-   React.useEffect(() => {
-    if (currentStep > 1) {
-      navigation.setOptions({
-        headerLeft: () => (
-          <TouchableOpacity onPress={onBack}>
-            <Text style={{ color: "#00AAEC", fontSize: 16 }}>Back</Text>
-          </TouchableOpacity>
-        ),
-      });
-    } else {
-      navigation.setOptions({ headerLeft: undefined, headerBackVisible: true });
+  const passwordForm = useForm<SignUpStep2Data>({
+    resolver: zodResolver(SignUpStep2Schema),
+    mode: 'onChange',
+    defaultValues: {
+      password: "",
+      confirmPassword: "",
     }
-  }, [navigation, currentStep, onBack]);
+  });
 
-  const validateField = (name: string, value: string): string | undefined => {
-    switch (name) {
-      case "emailOrPhone":
-        if (!value.trim()) return "This field is required";
-        if (useEmail) {
-          if (!emailRegex.test(value)) return "Please enter a valid email";
-        } else {
-          if (!phoneRegex.test(value)) return "Please enter a valid phone number";
-        }
-        break;
-      case "password":
-        if (!value) return "Password is required";
-        if (value.length < 8) return "Password must be at least 8 characters";
-        if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          return "Password must contain at least one uppercase, one lowercase and one number";
-        }
-        break;
-      case "confirmPassword":
-        if (!value) return "Please confirm your password";
-        if (value !== formData.password) return "Passwords do not match";
-        break;
-      case "firstName":
-        if (!value.trim()) return "First name is required";
-        if (value.trim().length < 2) return "First name must be at least 2 characters";
-        break;
-      case "lastName":
-        if (!value.trim()) return "Last name is required";
-        if (value.trim().length < 2) return "Last name must be at least 2 characters";
-        break;
-      case "username":
-        if (!value.trim()) return "Username is required";
-        if (!usernameRegex.test(value)) {
-          return "Username must be 3-20 characters (letters, numbers and _)";
-        }
-        break;
-      case "phoneNumber":
-        if (!value.trim()) return "Phone number is required";
-        if (!phoneRegex.test(value)) return "Please enter a valid phone number";
-        break;
-      case "birthdate": {
-        if (!value) return "Birth date is required";
-        const birthDate = new Date(value);
-        const today = new Date();
-        const age = today.getFullYear() - birthDate.getFullYear();
-        if (age < 13) return "You must be at least 13 years old";
-        if (age > 120) return "Please enter a valid birth date";
-        break;
-      }
+  const profileForm = useForm<SignUpStep3Data>({
+    resolver: zodResolver(SignUpStep3Schema),
+    mode: 'onChange',
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      username: "",
+      phoneNumber: "",
+      birthdate: "",
+      profilePicture: null,
     }
-    return undefined;
-  };
+  });
 
-  const handleInputChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    const error = validateField(name, value);
-    setErrors(prev => ({ ...prev, [name]: error }));
-  };
-
-  const pickImage = async () => {
+  const pickImage = () => {
     Alert.alert(
       "Select Image", 
       "This functionality will be available soon.",
@@ -375,60 +72,35 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
 
   const validateCurrentStep = (): boolean => {
     if (currentStep === 1) {
-      const emailOrPhoneError = validateField("emailOrPhone", formData.emailOrPhone);
-      return !emailOrPhoneError;
+      return emailOrPhoneForm.formState.isValid;
     } else if (currentStep === 2) {
-      const passwordError = validateField("password", formData.password);
-      const confirmPasswordError = validateField("confirmPassword", formData.confirmPassword);
-      return !passwordError && !confirmPasswordError;
+      return passwordForm.formState.isValid;
     } else if (currentStep === 3) {
-      const firstNameError = validateField("firstName", formData.firstName);
-      const lastNameError = validateField("lastName", formData.lastName);
-      const usernameError = validateField("username", formData.username);
-      const phoneError = validateField("phoneNumber", formData.phoneNumber);
-      const birthdateError = validateField("birthdate", formData.birthdate);
-      
-      return !firstNameError && !lastNameError && !usernameError && !phoneError && !birthdateError;
+      return profileForm.formState.isValid;
     }
     return false;
   };
 
   const handleNext = async () => {
-    const isValid = validateCurrentStep();
-    if (isValid) {
-      if (currentStep < 3) {
+    if (currentStep === 1) {
+      const isValid = await emailOrPhoneForm.trigger();
+      if (isValid) {
         setCurrentStep(currentStep + 1);
-      } else {
-        
-        const emailToVerify = useEmail ? formData.emailOrPhone : formData.emailOrPhone;
-
-        if (useEmail) {
-          
-          if (!emailRegex.test(emailToVerify)) {
-            Alert.alert("Error", "Por favor ingresa un email válido.");
-            return;
-          }
-          try {
-            const result = await sendEmailMutation.mutateAsync({
-              to: emailToVerify,
-            });
-            if (result.success) {
-              router.push(`/verify-email?email=${encodeURIComponent(emailToVerify)}`);
-            } else {
-              Alert.alert("Error", result.error || "Error al enviar el código de verificación. Por favor, intenta de nuevo.");
-            }
-          } catch (error: any) {
-            
-            if (error?.message?.includes('Invalid email')) {
-              Alert.alert("Error", "Por favor ingresa un email válido.");
-            } else {
-              Alert.alert("Error", "Error al enviar el código de verificación. Por favor, intenta de nuevo.");
-            }
-            console.error("Error enviando código:", error);
-          }
-        } else {
-          Alert.alert("Error", "Solo se soporta verificación por email en esta versión.");
-        }
+      }
+    } else if (currentStep === 2) {
+      const isValid = await passwordForm.trigger();
+      if (isValid) {
+        setCurrentStep(currentStep + 1);
+      }
+    } else if (currentStep === 3) {
+      const isValid = await profileForm.trigger();
+      if (isValid) {
+        // Final step, handle account creation
+        Alert.alert(
+          "Account Created", 
+          "Your account has been created successfully!",
+          [{ text: "OK" }]
+        );
       }
     }
   };
@@ -466,8 +138,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             {useEmail ? "Email" : "Phone Number"}
           </Text>
           <TextInput
-            value={formData.emailOrPhone}
-            onChangeText={(text) => handleInputChange("emailOrPhone", text)}
             placeholder={useEmail ? "your@email.com" : "+1 234 567 8900"}
             keyboardType={useEmail ? "email-address" : "phone-pad"}
             autoCapitalize="none"
@@ -479,21 +149,18 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               paddingHorizontal: isSmallDevice ? 12 : 16,
               borderRadius: 12,
               borderWidth: 2,
-              borderColor: errors.emailOrPhone ? '#fca5a5' : '#e5e7eb',
+              borderColor: emailOrPhoneForm.formState.errors.emailOrPhone ? '#fca5a5' : '#e5e7eb',
               backgroundColor: 'white',
               color: '#111827',
               height: isSmallDevice ? 48 : isTablet ? 64 : 56,
               textAlignVertical: 'center',
             }}
             placeholderTextColor="#9CA3AF"
+            {...emailOrPhoneForm.register("emailOrPhone")}
           />
-          {errors.emailOrPhone && (
-            <Text style={{ 
-              marginTop: 8, 
-              fontSize: isSmallDevice ? 12 : 14, 
-              color: '#dc2626' 
-            }}>
-              {errors.emailOrPhone}
+          {emailOrPhoneForm.formState.errors.emailOrPhone && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {emailOrPhoneForm.formState.errors.emailOrPhone.message}
             </Text>
           )}
         </View>
@@ -501,8 +168,8 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
         <TouchableOpacity
           onPress={() => {
             setUseEmail(!useEmail);
-            handleInputChange("emailOrPhone", "");
-            setErrors(prev => ({ ...prev, emailOrPhone: undefined }));
+            emailOrPhoneForm.setValue("emailOrPhone", "");
+            emailOrPhoneForm.clearErrors("emailOrPhone");
           }}
           style={{ alignSelf: 'center', marginTop: 10 }}
         >
@@ -551,8 +218,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             Password
           </Text>
           <TextInput
-            value={formData.password}
-            onChangeText={(text) => handleInputChange("password", text)}
             placeholder="Minimum 8 characters"
             secureTextEntry
             autoCapitalize="none"
@@ -564,21 +229,18 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               paddingHorizontal: isSmallDevice ? 12 : 16,
               borderRadius: 12,
               borderWidth: 2,
-              borderColor: errors.password ? '#fca5a5' : '#e5e7eb',
+              borderColor: passwordForm.formState.errors.password ? '#fca5a5' : '#e5e7eb',
               backgroundColor: 'white',
               color: '#111827',
               height: isSmallDevice ? 48 : isTablet ? 64 : 56,
               textAlignVertical: 'center',
             }}
             placeholderTextColor="#9CA3AF"
+            {...passwordForm.register("password")}
           />
-          {errors.password && (
-            <Text style={{ 
-              marginTop: 8, 
-              fontSize: isSmallDevice ? 12 : 14, 
-              color: '#dc2626' 
-            }}>
-              {errors.password}
+          {passwordForm.formState.errors.password && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {passwordForm.formState.errors.password.message}
             </Text>
           )}
         </View>
@@ -593,8 +255,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             Confirm Password
           </Text>
           <TextInput
-            value={formData.confirmPassword}
-            onChangeText={(text) => handleInputChange("confirmPassword", text)}
             placeholder="Repeat your password"
             secureTextEntry
             autoCapitalize="none"
@@ -606,21 +266,18 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               paddingHorizontal: isSmallDevice ? 12 : 16,
               borderRadius: 12,
               borderWidth: 2,
-              borderColor: errors.confirmPassword ? '#fca5a5' : '#e5e7eb',
+              borderColor: passwordForm.formState.errors.confirmPassword ? '#fca5a5' : '#e5e7eb',
               backgroundColor: 'white',
               color: '#111827',
               height: isSmallDevice ? 48 : isTablet ? 64 : 56,
               textAlignVertical: 'center',
             }}
             placeholderTextColor="#9CA3AF"
+            {...passwordForm.register("confirmPassword")}
           />
-          {errors.confirmPassword && (
-            <Text style={{ 
-              marginTop: 8, 
-              fontSize: isSmallDevice ? 12 : 14, 
-              color: '#dc2626' 
-            }}>
-              {errors.confirmPassword}
+          {passwordForm.formState.errors.confirmPassword && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {passwordForm.formState.errors.confirmPassword.message}
             </Text>
           )}
         </View>
@@ -665,8 +322,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               First Name
             </Text>
             <TextInput
-              value={formData.firstName}
-              onChangeText={(text) => handleInputChange("firstName", text)}
               placeholder="Your first name"
               autoCapitalize="words"
               style={{
@@ -676,21 +331,18 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
                 paddingHorizontal: isSmallDevice ? 12 : 16,
                 borderRadius: 12,
                 borderWidth: 2,
-                borderColor: errors.firstName ? '#fca5a5' : '#e5e7eb',
+                borderColor: profileForm.formState.errors.firstName ? '#fca5a5' : '#e5e7eb',
                 backgroundColor: 'white',
                 color: '#111827',
                 height: isSmallDevice ? 48 : isTablet ? 64 : 56,
                 textAlignVertical: 'center',
               }}
               placeholderTextColor="#9CA3AF"
+              {...profileForm.register("firstName")}
             />
-            {errors.firstName && (
-              <Text style={{ 
-                marginTop: 8, 
-                fontSize: isSmallDevice ? 12 : 14, 
-                color: '#dc2626' 
-              }}>
-                {errors.firstName}
+            {profileForm.formState.errors.firstName && (
+              <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+                {profileForm.formState.errors.firstName.message}
               </Text>
             )}
           </View>
@@ -705,8 +357,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               Last Name
             </Text>
             <TextInput
-              value={formData.lastName}
-              onChangeText={(text) => handleInputChange("lastName", text)}
               placeholder="Your last name"
               autoCapitalize="words"
               style={{
@@ -716,21 +366,18 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
                 paddingHorizontal: isSmallDevice ? 12 : 16,
                 borderRadius: 12,
                 borderWidth: 2,
-                borderColor: errors.lastName ? '#fca5a5' : '#e5e7eb',
+                borderColor: profileForm.formState.errors.lastName ? '#fca5a5' : '#e5e7eb',
                 backgroundColor: 'white',
                 color: '#111827',
                 height: isSmallDevice ? 48 : isTablet ? 64 : 56,
                 textAlignVertical: 'center',
               }}
               placeholderTextColor="#9CA3AF"
+              {...profileForm.register("lastName")}
             />
-            {errors.lastName && (
-              <Text style={{ 
-                marginTop: 8, 
-                fontSize: isSmallDevice ? 12 : 14, 
-                color: '#dc2626' 
-              }}>
-                {errors.lastName}
+            {profileForm.formState.errors.lastName && (
+              <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+                {profileForm.formState.errors.lastName.message}
               </Text>
             )}
           </View>
@@ -746,8 +393,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             Username
           </Text>
           <TextInput
-            value={formData.username}
-            onChangeText={(text) => handleInputChange("username", text)}
             placeholder="@yourusername"
             autoCapitalize="none"
             autoCorrect={false}
@@ -758,38 +403,48 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               paddingHorizontal: isSmallDevice ? 12 : 16,
               borderRadius: 12,
               borderWidth: 2,
-              borderColor: errors.username ? '#fca5a5' : '#e5e7eb',
+              borderColor: profileForm.formState.errors.username ? '#fca5a5' : '#e5e7eb',
               backgroundColor: 'white',
               color: '#111827',
               height: isSmallDevice ? 48 : isTablet ? 64 : 56,
               textAlignVertical: 'center',
             }}
             placeholderTextColor="#9CA3AF"
+            {...profileForm.register("username")}
           />
-          {errors.username && (
-            <Text style={{ 
-              marginTop: 8, 
-              fontSize: isSmallDevice ? 12 : 14, 
-              color: '#dc2626' 
-            }}>
-              {errors.username}
+          {profileForm.formState.errors.username && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {profileForm.formState.errors.username.message}
             </Text>
           )}
         </View>
 
-        <View style={{ 
-          marginTop: isLandscape ? 16 : 24,
-          flexDirection: isLandscape && isTablet ? 'row' : 'column',
-          gap: isLandscape && isTablet ? 24 : (isLandscape ? 16 : 24)
-        }}>
-          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
-            <Text style={{ 
-              fontSize: isSmallDevice ? 14 : 16, 
-              fontWeight: '500', 
-              color: '#374151', 
-              marginBottom: 12 
-            }}>
-              Phone Number
+        <View style={{ marginTop: 24 }}>
+          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+            Phone Number
+          </Text>
+          <TextInput
+            placeholder="+1 234 567 8900"
+            keyboardType="phone-pad"
+            style={{
+              width: '100%',
+              fontSize: 16,
+              paddingVertical: 16,
+              paddingHorizontal: 16,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: profileForm.formState.errors.phoneNumber ? '#fca5a5' : '#e5e7eb',
+              backgroundColor: 'white',
+              color: '#111827',
+              height: 56,
+              textAlignVertical: 'center',
+            }}
+            placeholderTextColor="#9CA3AF"
+            {...profileForm.register("phoneNumber")}
+          />
+          {profileForm.formState.errors.phoneNumber && (
+            <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+              {profileForm.formState.errors.phoneNumber.message}
             </Text>
             <TextInput
               value={formData.phoneNumber}
@@ -872,13 +527,47 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           </View>
         </View>
 
-        <View style={{ marginTop: isLandscape ? 16 : 24 }}>
-          <Text style={{ 
-            fontSize: isSmallDevice ? 14 : 16, 
-            fontWeight: '500', 
-            color: '#374151', 
-            marginBottom: 12 
-          }}>
+        <View style={{ marginTop: 24 }}>
+          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
+            Birth Date
+          </Text>
+          <Controller
+            control={profileForm.control}
+            name="birthdate"
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
+              <>
+                <TextInput
+                  value={value}
+                  onChangeText={onChange}
+                  onBlur={onBlur}
+                  placeholder="YYYY-MM-DD"
+                  style={{
+                    width: '100%',
+                    fontSize: 16,
+                    paddingVertical: 16,
+                    paddingHorizontal: 16,
+                    borderRadius: 12,
+                    borderWidth: 2,
+                    borderColor: error ? '#fca5a5' : '#e5e7eb',
+                    backgroundColor: 'white',
+                    color: '#111827',
+                    height: 56,
+                    textAlignVertical: 'center',
+                  }}
+                  placeholderTextColor="#9CA3AF"
+                />
+                {error && (
+                  <Text style={{ marginTop: 8, fontSize: 14, color: '#dc2626' }}>
+                    {error.message}
+                  </Text>
+                )}
+              </>
+            )}
+          />
+        </View>
+
+        <View style={{ marginTop: 24 }}>
+          <Text style={{ fontSize: 16, fontWeight: '500', color: '#374151', marginBottom: 12 }}>
             Profile Picture (optional)
           </Text>
           <View style={{ 
@@ -894,12 +583,8 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
               justifyContent: 'center', 
               alignItems: 'center' 
             }}>
-              <Text style={{ 
-                color: 'white', 
-                fontWeight: 'bold', 
-                fontSize: isSmallDevice ? 18 : isTablet ? 32 : 24 
-              }}>
-                {formData.firstName.charAt(0).toUpperCase() || "?"}
+              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 24 }}>
+                {profileForm.watch("firstName")?.charAt(0).toUpperCase() || "?"}
               </Text>
             </View>
             <TouchableOpacity
@@ -943,7 +628,8 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
           paddingBottom: isLandscape ? 20 : 40
         }}
       >
-        <View style={{ flex: 1, justifyContent: isLandscape ? 'flex-start' : 'center' }}>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+
           {/* Header */}
           <View style={{ marginBottom: isLandscape ? 16 : 24 }}>
             <View style={{ alignItems: 'center', marginBottom: 16 }}>
@@ -980,7 +666,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             </View>
           </View>
 
-          {/* Form Container */}
           <View style={{ 
             backgroundColor: 'white', 
             borderRadius: isSmallDevice ? 16 : isTablet ? 32 : 24, 
@@ -996,7 +681,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
             {currentStep === 2 && renderStep2()}
             {currentStep === 3 && renderStep3()}
 
-            {/* Navigation Buttons */}
             <View style={{ marginTop: 5 }}>
               <TouchableOpacity
                 onPress={handleNext}

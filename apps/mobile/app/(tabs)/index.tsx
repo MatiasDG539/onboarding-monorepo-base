@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import LandingPage from '@/components/home-screen';
+import HomeScreen from '@/components/home-screen';
 import SplashScreen from '@/components/splash-screen';
 
-export default function HomeScreen() {
+export default function Home() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -17,5 +17,5 @@ export default function HomeScreen() {
     return <SplashScreen />;
   }
 
-  return <LandingPage />;
+  return <HomeScreen />;
 }

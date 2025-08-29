@@ -1,8 +1,8 @@
 import { Stack, useRouter } from "expo-router";
 import { useState } from "react";
-import SignUpPage from "./screens/sign-up-page";
+import SignUpScreen from "./screens/sign-up-screen";
 
-export default function SignUpScreen() {
+const SignUp = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const router = useRouter();
 
@@ -15,9 +15,10 @@ export default function SignUpScreen() {
           headerBackVisible: false,
         }}
       />
-      <SignUpPage
+
+      <SignUpScreen
         currentStep={currentStep}
-        setCurrentStep={(step) => setCurrentStep(step)}
+        setCurrentStep={setCurrentStep}
         onBack={() => {
           if (currentStep > 1) {
             setCurrentStep(currentStep - 1);
@@ -28,4 +29,6 @@ export default function SignUpScreen() {
       />
     </>
   );
-}
+};
+
+export default SignUp;
