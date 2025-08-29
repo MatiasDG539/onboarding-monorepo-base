@@ -21,13 +21,13 @@ import {
   type SignUpStep3Data,
 } from '@/forms/schemas';
 
-interface SignUpPageProps {
+interface SignUpScreenProps {
   currentStep: number;
   setCurrentStep: (step: number) => void;
   onBack?: () => void;
 }
 
-export default function SignUpPage({ currentStep, setCurrentStep, onBack }: SignUpPageProps) {
+export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: SignUpScreenProps) {
   const [useEmail, setUseEmail] = useState(true);
 
   const emailOrPhoneForm = useForm<SignUpStep1Data>({
@@ -59,7 +59,6 @@ export default function SignUpPage({ currentStep, setCurrentStep, onBack }: Sign
       profilePicture: null,
     }
   });
-
 
   const pickImage = () => {
     Alert.alert(
