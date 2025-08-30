@@ -98,7 +98,7 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
         email,
         code: enteredCode,
       });
-      if (!result.valid) {
+      if (!result.success) {
         setError("Código inválido. Intenta nuevamente.");
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
