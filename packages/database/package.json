@@ -1,0 +1,22 @@
+{
+  "name": "database",
+  "version": "0.0.0",
+  "main": "./index.tsx",
+  "types": "./**/.tsx",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "with-env": "dotenv -c -e ../../.env --",
+    "db:generate": "prisma generate",
+    "db:push": "pnpm with-env prisma db push --skip-generate",
+    "db:studio": "pnpm with-env prisma studio",
+    "db:generate:migration": "pnpm with-env prisma migrate dev --create-only --name",
+    "db:reset": "pnpm with-env prisma migrate reset",
+    "db:migrate": "pnpm with-env prisma migrate deploy"
+  },
+  "devDependencies": {
+    "prisma": "^5.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.0.0"
+  }
+}

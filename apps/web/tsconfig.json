@@ -6,12 +6,12 @@
         "name": "next"
       }
     ],
-    "baseUrl": "./",
     "paths": {
-      "@repo/forms/*": [
-        "components/forms/*"
-      ]
-    }
+      "@api/*": ["../../packages/api/*"],
+      "@api/trpc/*": ["../../packages/api/trpc/*"],
+      "@repo/forms/*": ["components/forms/*"]
+    },
+    "baseUrl": "./",
   },
   "include": [
     "**/*.ts",

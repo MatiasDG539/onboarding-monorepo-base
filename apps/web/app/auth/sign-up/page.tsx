@@ -1,8 +1,9 @@
-
 "use client";
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { trpc } from "../../../lib/trpc";
 import type { FC } from "react";
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,6 +15,7 @@ import {
 import type { SignUpStep1Data, SignUpStep2Data, SignUpStep3Data } from 'components/forms/schemas';
 
 const SignUp: FC = () => {
+  const router = useRouter();
   const [useEmail, setUseEmail] = useState(true);
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -65,24 +67,46 @@ const SignUp: FC = () => {
     return false;
   };
 
+  const sendActivationEmail = trpc.email.sendActivationEmail.useMutation();
+  const registerMutation = trpc.auth.register.useMutation();
+  const [error, setError] = useState<string>("");
+
   const handleNext = async () => {
     if (currentStep === 1) {
       const isValid = await emailOrPhoneForm.trigger();
       if (isValid) {
-      setCurrentStep(currentStep + 1);
+        setCurrentStep(currentStep + 1);
       }
     } else if (currentStep === 2) {
       const isValid = await passwordForm.trigger();
       if (isValid) {
-      setCurrentStep(currentStep + 1);
+        setCurrentStep(currentStep + 1);
       }
     } else if (currentStep === 3) {
       const isValid = await profileForm.trigger();
       if (isValid) {
-      // Final step, handle account creation
+        setError("");
+        try {
+          const userData = {
+            ...emailOrPhoneForm.getValues(),
+            ...passwordForm.getValues(),
+            ...profileForm.getValues(),
+          };
+          const result = await registerMutation.mutateAsync(userData);
+          if (!result.success) {
+            setError('error' in result ? result.error : "No se pudo crear el usuario.");
+            return;
+          }
+          const emailOrPhone = emailOrPhoneForm.getValues("emailOrPhone");
+          await sendActivationEmail.mutateAsync({ to: emailOrPhone });
+          const encodedEmail = encodeURIComponent(emailOrPhone);
+          router.push(`/auth/verify/email?email=${encodedEmail}`);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "No se pudo crear el usuario.");
+        }
       }
     }
-  };
+  }
 
   const handleBack = () => {
     if (currentStep > 1) {
@@ -392,17 +416,27 @@ const SignUp: FC = () => {
           {currentStep === 2 && renderStep2()}
           {currentStep === 3 && renderStep3()}
 
+          {error && (
+            <div className="text-center p-3 bg-red-50 border border-red-200 rounded-lg mb-4">
+              <p className="text-red-700 text-sm font-medium">{error}</p>
+            </div>
+          )}
+
           <div className="mt-8 space-y-4">
             <button
               onClick={handleNext}
-              disabled={!validateCurrentStep()}
+              disabled={!validateCurrentStep() || sendActivationEmail.isPending}
               className={`w-full py-3 px-6 rounded-full font-bold text-lg transition-all duration-200 ${
-                validateCurrentStep()
+                validateCurrentStep() && !sendActivationEmail.isPending
                   ? "bg-[#00AAEC] hover:bg-[#1DA1F2] text-white hover:scale-105 hover:shadow-lg"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"
               }`}
             >
-              {currentStep === 3 ? "Create account" : "Next"}
+              {currentStep === 3
+                ? sendActivationEmail.isPending
+                  ? "Enviando código..."
+                  : "Create account"
+                : "Next"}
             </button>
 
             {currentStep > 1 && (

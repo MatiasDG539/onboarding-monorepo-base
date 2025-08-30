@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { TRPCProvider } from "../lib/trpc-provider";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -21,8 +22,10 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>): React.ReactElement {
   return (
     <html lang="en">
-  <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen antialiased text-gray-900`}>
-        {children}
+      <body className={`${geistSans.variable} ${geistMono.variable} min-h-screen antialiased text-gray-900`}>
+        <TRPCProvider>
+          {children}
+        </TRPCProvider>
       </body>
     </html>
   );
