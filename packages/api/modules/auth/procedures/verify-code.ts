@@ -15,10 +15,10 @@ export const verifyCodeRouter = router({
 			const normalizedEmail = input.email.trim().toLowerCase();
 			const storedCode = codes.get(normalizedEmail);
 			if (!storedCode) {
-				return { valid: false };
+				return { success: false };
 			}
 			const normalizedStored = String(storedCode).trim();
 			const normalizedInput = String(input.code).trim();
-			return { valid: normalizedStored === normalizedInput };
+			return { success: normalizedStored === normalizedInput };
 		})
 });

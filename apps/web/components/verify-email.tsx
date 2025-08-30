@@ -13,8 +13,8 @@ interface VerifyEmailProps {
 
 const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
   const router = useRouter();
-  const [code, setCode] = useState<string[]>(["", "", "", "", "", ""]);
-  const [error, setError] = useState<string>("");
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [error, setError] = useState("");
   const [isComplete, setIsComplete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
@@ -94,16 +94,20 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
 
     try {
       const enteredCode = code.join("");
-
-      await verifyMutation.mutateAsync({
+      const result = await verifyMutation.mutateAsync({
         email,
         code: enteredCode,
       });
-
+      if (!result.valid) {
+        setError("Código inválido. Intenta nuevamente.");
+        setCode(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
+        return;
+      }
       router.push("/dashboard");
     } catch (error) {
       console.error("Error verifying code:", error);
-      setError(error instanceof Error ? error.message : "Invalid code. Please try again.");
+      setError(error instanceof Error ? error.message : "Error verificando el código.");
       setCode(["", "", "", "", "", ""]);
       inputRefs.current[0]?.focus();
     } finally {
