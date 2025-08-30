@@ -12,6 +12,24 @@ export const ERROR_MESSAGES = {
   NAME_TOO_SHORT: (field: string) => `${field} must be at least 2 characters`,
 } as const;
 
+// Sign-in schema
+export const SignInSchema = z.object({
+  emailOrPhone: z.string()
+    .min(1, ERROR_MESSAGES.REQUIRED)
+    .refine((value) => {
+      if (value.indexOf('@') !== -1) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      } else {
+        return /^\+?[\d\s\-()]{10,15}$/.test(value);
+      }
+    }, ERROR_MESSAGES.EMAIL_INVALID),
+  password: z.string()
+    .min(8, ERROR_MESSAGES.PASSWORD_TOO_SHORT),
+});
+
+export type SignInData = z.infer<typeof SignInSchema>;
+
+// Sign-up schemas
 export const SignUpStep1Schema = z.object({
   emailOrPhone: z.string()
     .min(1, ERROR_MESSAGES.REQUIRED)

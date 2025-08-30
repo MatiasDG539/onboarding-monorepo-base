@@ -1,28 +1,18 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
-import type { FC } from 'react';
 import { useRouter } from 'expo-router';
 
-const HomeScreen: FC = () => {
+const HomeScreen = () => {
   const router = useRouter();
 
   return (
     <View className="flex-1 bg-gradient-to-b from-slate-50 to-white">
-      {/* Status Bar Space */}
       <View className="h-14"></View>
       
       {/* Header */}
-      <View className="flex-row justify-end items-center px-6 py-8">
-        <TouchableOpacity>
-          <Text className="text-[#00AAEC] font-semibold text-base">I have an account</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Main Content - Centered */}
       <View className="flex-1 justify-center items-center px-8">
         
-        {/* Logo Section */}
         <View className="items-center mb-12">
           <View className="mb-6">
             <Svg width={72} height={72} viewBox="0 -4 48 48">
@@ -36,7 +26,6 @@ const HomeScreen: FC = () => {
           <Text className="text-3xl font-bold text-gray-900 mb-2">TwitterClone</Text>
         </View>
 
-        {/* Hero Text */}
         <View className="items-center mb-16">
           <Text className="text-3xl font-bold text-gray-900 text-center leading-tight mb-6">
             Connect with the world in{' '}
@@ -47,7 +36,6 @@ const HomeScreen: FC = () => {
           </Text>
         </View>
 
-        {/* CTA Button */}
         <View className="w-full max-w-sm mb-8">
           <TouchableOpacity 
             className="bg-[#00AAEC] py-4 px-8 rounded-full shadow-lg"
@@ -60,10 +48,14 @@ const HomeScreen: FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Secondary Action */}
-        <TouchableOpacity className="mb-12">
+        <TouchableOpacity
+          className="mb-12"
+          onPress={() => router.push('/sign-in')}
+          activeOpacity={0.8}
+        >
           <Text className="text-gray-500 text-base text-center">
-            Already have an account? <Text className="text-[#00AAEC] font-semibold">Sign In</Text>
+            Already have an account?{' '}
+            <Text className="text-[#00AAEC] font-semibold">Sign In</Text>
           </Text>
         </TouchableOpacity>
 
