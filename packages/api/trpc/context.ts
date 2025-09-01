@@ -1,10 +1,13 @@
+import prisma from '../../database';
+
 export async function createContext(opts?: { req?: any; res?: any } | undefined) {
   const { req, res } = opts || {};
 
   return {
-    userId: undefined, // TODO: Implement authentication
+    userId: undefined,
     req,
     res,
+    prisma,
   };
 }
 
