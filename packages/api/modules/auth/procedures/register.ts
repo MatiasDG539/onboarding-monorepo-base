@@ -15,6 +15,29 @@ const userDataSchema = z.object({
 type UserData = z.infer<typeof userDataSchema>;
 
 export const authRouter = router({
+  checkEmailExists: publicProcedure
+    .input(z.object({
+      email: z.string().email(),
+    }))
+    .query(async ({ input, ctx }) => {
+      try {
+        const normalizedEmail = input.email.trim().toLowerCase();
+        
+        const existingUser = await ctx.prisma.user.findUnique({
+          where: { email: normalizedEmail },
+          select: { id: true }
+        });
+        
+        return { 
+          exists: !!existingUser,
+          email: normalizedEmail
+        };
+      } catch (error) {
+        console.error('Check email exists error:', error);
+        return { exists: false, email: input.email };
+      }
+    }),
+
   register: publicProcedure
     .input(userDataSchema)
     .mutation(async ({ input, ctx }) => {
