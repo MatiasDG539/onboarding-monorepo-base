@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
-  useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { useForm, Controller } from 'react-hook-form';
@@ -38,12 +38,6 @@ export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: Si
 
   const router = useRouter();
   const navigation = useNavigation();
-
-  const { width, height } = useWindowDimensions();
-
-  const isSmallDevice = width < 375;
-  const isTablet = width >= 768;
-  const isLandscape = width > height;
 
   const sendEmailMutation = trpc.email.sendActivationEmail.useMutation();
   const registerMutation = trpc.auth.register.useMutation();
@@ -101,77 +95,201 @@ export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: Si
     const currentYear = new Date().getFullYear();
     const years = Array.from({ length: 100 }, (_, i) => currentYear - 13 - i);
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
-    const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+    const getDaysInMonth = (year: number, month: number) => {
+      return new Date(year, month + 1, 0).getDate();
+    };
+
+    const days = Array.from({ length: getDaysInMonth(tempDate.getFullYear(), tempDate.getMonth()) }, (_, i) => i + 1);
+
+    const WheelPicker = ({
+      data,
+      selectedValue,
+      onValueChange,
+      itemHeight = 50
+    }: {
+      data: (string | number)[],
+      selectedValue: string | number,
+      onValueChange: (value: string | number) => void,
+      itemHeight?: number
+    }) => {
+      const scrollViewRef = React.useRef<ScrollView>(null);
+      const [initialized, setInitialized] = React.useState(false);
+
+      React.useEffect(() => {
+        if (scrollViewRef.current && !initialized) {
+          const selectedIndex = data.findIndex(item => item === selectedValue);
+          if (selectedIndex !== -1) {
+            setTimeout(() => {
+              scrollViewRef.current?.scrollTo({
+                y: selectedIndex * itemHeight,
+                animated: false,
+              });
+              setInitialized(true);
+            }, 100);
+          }
+        }
+      }, [data, selectedValue, itemHeight, initialized]);
+
+      const handleScroll = (event: any) => {
+        const y = event.nativeEvent.contentOffset.y;
+        const index = Math.round(y / itemHeight);
+        const clampedIndex = Math.max(0, Math.min(index, data.length - 1));
+        if (data[clampedIndex] !== selectedValue) {
+          onValueChange(data[clampedIndex]);
+        }
+      };
+
+      return (
+        <View className="flex-1" style={{ height: itemHeight * 5, position: 'relative' }}>
+          <View
+            className="absolute left-0 right-0 z-10"
+            style={{
+              top: itemHeight * 2,
+              height: itemHeight,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: '#00AAEC',
+              backgroundColor: 'transparent',
+              shadowColor: '#00AAEC',
+              shadowOpacity: 0.08,
+              shadowRadius: 4,
+              shadowOffset: { width: 0, height: 2 },
+            }}
+            pointerEvents="none"
+          />
+          <ScrollView
+            ref={scrollViewRef}
+            showsVerticalScrollIndicator={false}
+            snapToInterval={itemHeight}
+            decelerationRate="fast"
+            onMomentumScrollEnd={handleScroll}
+            contentContainerStyle={{
+              paddingVertical: itemHeight * 2,
+            }}
+          >
+            {data.map((item, index) => {
+              const isSelected = item === selectedValue;
+              return (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => {
+                    onValueChange(item);
+                    scrollViewRef.current?.scrollTo({
+                      y: index * itemHeight,
+                      animated: true,
+                    });
+                  }}
+                  className="justify-center items-center"
+                  style={{ height: itemHeight }}
+                >
+                  <View
+                    style={{
+                      height: itemHeight,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      width: '100%',
+                      backgroundColor: isSelected ? 'transparent' : 'transparent',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: isSelected ? 24 : 16,
+                        fontWeight: isSelected ? '700' : '400',
+                        color: isSelected ? '#00AAEC' : '#A0AEC0',
+                        opacity: isSelected ? 1 : 0.5,
+                        textAlign: 'center',
+                        letterSpacing: isSelected ? 0.5 : 0,
+                        backgroundColor: 'transparent',
+                      }}
+                    >
+                      {item}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      );
+    };
 
     return (
       <Modal visible={showDatePicker} transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <View style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
-
-            {/* Header */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 20 }}>
+        <View className="flex-1 justify-end bg-black/50">
+          <View className="bg-white rounded-t-3xl">
+            <View className="flex-row justify-between items-center p-5 border-b border-gray-100">
               <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                <Text style={{ color: '#6b7280', fontSize: 16 }}>Cancel</Text>
+                <Text className="text-gray-500 text-base">Cancel</Text>
               </TouchableOpacity>
-              <Text style={{ fontSize: 18, fontWeight: '600', color: '#111827' }}>Select Birth Date</Text>
+              <Text className="text-gray-900 text-lg font-semibold">Select Birth Date</Text>
               <TouchableOpacity onPress={() => handleDateSelect(tempDate)}>
-                <Text style={{ color: '#00AAEC', fontSize: 16, fontWeight: '600' }}>Done</Text>
+                <Text className="text-[#00AAEC] text-base font-semibold">Done</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={{ padding: 20, gap: 16 }}>
-              <Text style={{ textAlign: 'center', marginBottom: 8 }}>
-                {formatDateForDisplay(tempDate)}
+            <View className="px-5 py-4">
+              <Text className="text-center text-lg font-medium text-gray-900 mb-6">
+                {tempDate.getDate().toString().padStart(2, '0')}/{(tempDate.getMonth() + 1).toString().padStart(2, '0')}/{tempDate.getFullYear()}
               </Text>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-                {years.map(year => (
-                  <TouchableOpacity
-                    key={year}
-                    onPress={() => setTempDate(new Date(year, tempDate.getMonth(), tempDate.getDate()))}
-                    style={{
-                      paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8,
-                      backgroundColor: tempDate.getFullYear() === year ? '#00AAEC' : '#f3f4f6'
-                    }}>
-                    <Text style={{ color: tempDate.getFullYear() === year ? 'white' : '#374151' }}>{year}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              <View className="flex-row justify-between items-center" style={{ height: 250 }}>
+                {/* Day Picker */}
+                <View className="flex-1">
+                  <Text className="text-center text-sm font-medium text-gray-700 mb-2">Day</Text>
+                  <WheelPicker
+                    data={days}
+                    selectedValue={tempDate.getDate()}
+                    onValueChange={(day) => {
+                      const newDate = new Date(tempDate.getFullYear(), tempDate.getMonth(), day as number);
+                      setTempDate(newDate);
+                    }}
+                  />
+                </View>
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-                {months.map((month, idx) => (
-                  <TouchableOpacity
-                    key={month}
-                    onPress={() => setTempDate(new Date(tempDate.getFullYear(), idx, tempDate.getDate()))}
-                    style={{
-                      paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
-                      backgroundColor: tempDate.getMonth() === idx ? '#00AAEC' : '#f3f4f6'
-                    }}>
-                    <Text style={{ color: tempDate.getMonth() === idx ? 'white' : '#374151' }}>{month}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+                <View className="w-px bg-gray-200 mx-2" style={{ height: 200 }} />
 
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-                {days.map(day => {
-                  const daysInMonth = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
-                  if (day > daysInMonth) return null;
-                  return (
-                    <TouchableOpacity
-                      key={day}
-                      onPress={() => setTempDate(new Date(tempDate.getFullYear(), tempDate.getMonth(), day))}
-                      style={{
-                        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8,
-                        backgroundColor: tempDate.getDate() === day ? '#00AAEC' : '#f3f4f6'
-                      }}>
-                      <Text style={{ color: tempDate.getDate() === day ? 'white' : '#374151' }}>{day}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+                <View className="flex-1">
+                  <Text className="text-center text-sm font-medium text-gray-700 mb-2">Month</Text>
+                  <WheelPicker
+                    data={months}
+                    selectedValue={months[tempDate.getMonth()]}
+                    onValueChange={(month) => {
+                      const monthIndex = months.indexOf(month as string);
+                      const newDate = new Date(tempDate.getFullYear(), monthIndex, tempDate.getDate());
+                      // Ajustar el día si el mes nuevo tiene menos días
+                      const daysInNewMonth = getDaysInMonth(newDate.getFullYear(), monthIndex);
+                      if (newDate.getDate() > daysInNewMonth) {
+                        newDate.setDate(daysInNewMonth);
+                      }
+                      setTempDate(newDate);
+                    }}
+                  />
+                </View>
+
+                <View className="w-px bg-gray-200 mx-2" style={{ height: 200 }} />
+
+                <View className="flex-1">
+                  <Text className="text-center text-sm font-medium text-gray-700 mb-2">Year</Text>
+                  <WheelPicker
+                    data={years}
+                    selectedValue={tempDate.getFullYear()}
+                    onValueChange={(year) => {
+                      const newDate = new Date(year as number, tempDate.getMonth(), tempDate.getDate());
+                      const daysInNewMonth = getDaysInMonth(year as number, newDate.getMonth());
+                      if (newDate.getDate() > daysInNewMonth) {
+                        newDate.setDate(daysInNewMonth);
+                      }
+                      setTempDate(newDate);
+                    }}
+                  />
+                </View>
+              </View>
+
+              <View className="h-4" />
             </View>
           </View>
         </View>
@@ -184,7 +302,7 @@ export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: Si
       navigation.setOptions({
         headerLeft: () => (
           <TouchableOpacity onPress={onBack}>
-            <Text style={{ color: "#00AAEC", fontSize: 16 }}>Back</Text>
+            <Text className="text-[#00AAEC] text-base">Back</Text>
           </TouchableOpacity>
         ),
       });
@@ -193,11 +311,11 @@ export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: Si
     }
   }, [navigation, currentStep, onBack]);
 
-  const validateCurrentStep = (): boolean => {
-    if (currentStep === 1) return emailOrPhoneForm.formState.isValid;
-    if (currentStep === 2) return passwordForm.formState.isValid;
-    if (currentStep === 3) return profileForm.formState.isValid;
-    return false;
+  const getCurrentFormState = () => {
+    if (currentStep === 1) return emailOrPhoneForm.formState;
+    if (currentStep === 2) return passwordForm.formState;
+    if (currentStep === 3) return profileForm.formState;
+    return { isValid: false, isSubmitting: false };
   };
 
   const handleNext = async () => {
@@ -255,654 +373,262 @@ export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: Si
   };
 
   const renderStep1 = () => (
-    <View style={{ marginVertical: isLandscape ? 16 : 32 }}>
-      <View style={{ marginVertical: 12 }}>
-        <Text style={{
-          fontSize: isSmallDevice ? 24 : isTablet ? 36 : 30,
-          fontWeight: 'bold',
-          color: '#111827',
-          textAlign: 'center'
-        }}>
-          Join TwitterClone
-        </Text>
-        <Text style={{
-          color: '#6b7280',
-          textAlign: 'center',
-          fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18,
-          marginTop: 12,
-          paddingHorizontal: isSmallDevice ? 16 : 0
-        }}>
-          Let&apos;s start with your email
-        </Text>
-      </View>
+    <View className="items-center mb-8">
+      <Text className="text-3xl font-bold text-gray-900 mb-2">Join TwitterClone</Text>
+      <Text className="text-base text-gray-500 text-center mb-8">Let&apos;s start with your email</Text>
 
-      <View style={{ marginVertical: isLandscape ? 16 : 24 }}>
-        <View>
-          <Text style={{
-            fontSize: isSmallDevice ? 14 : 16,
-            fontWeight: '500',
-            color: '#374151',
-            marginBottom: 12
-          }}>
-            {useEmail ? "Email" : "Phone Number"}
-          </Text>
-          <Controller
-            control={emailOrPhoneForm.control}
-            name="emailOrPhone"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="your@email.com"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{
-                    width: '100%',
-                    fontSize: isSmallDevice ? 14 : 16,
-                    paddingVertical: isSmallDevice ? 12 : 16,
-                    paddingHorizontal: isSmallDevice ? 12 : 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: emailOrPhoneForm.formState.errors.emailOrPhone ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: isSmallDevice ? 48 : isTablet ? 64 : 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {emailOrPhoneForm.formState.errors.emailOrPhone && (
-                  <Text style={{
-                    marginTop: 8,
-                    fontSize: isSmallDevice ? 12 : 14,
-                    color: '#dc2626'
-                  }}>
-                    {emailOrPhoneForm.formState.errors.emailOrPhone.message}
-                  </Text>
-                )}
-              </>
-            )}
-          />
-        </View>
+      <View className="w-full">
+        <Controller
+          control={emailOrPhoneForm.control}
+          name="emailOrPhone"
+          render={({ field: { onChange, value } }) => (
+            <View className="bg-white border border-gray-200 rounded-xl mb-3">
+              <TextInput
+                className="px-4 py-3 text-base text-gray-900"
+                style={{ minHeight: 48, fontSize: 16, color: '#1A202C' }}
+                placeholder="your@email.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                onChangeText={onChange}
+                value={value}
+                placeholderTextColor="#A0AEC0"
+                numberOfLines={1}
+                textAlignVertical="center"
+                allowFontScaling={true}
+                autoFocus={true}
+              />
+            </View>
+          )}
+        />
+        {emailOrPhoneForm.formState.errors.emailOrPhone && (
+          <Text className="text-red-500 text-xs mb-2">{emailOrPhoneForm.formState.errors.emailOrPhone.message}</Text>
+        )}
       </View>
     </View>
   );
 
   const renderStep2 = () => (
-    <View style={{ marginVertical: isLandscape ? 16 : 32 }}>
-      <View style={{ marginVertical: 12 }}>
-        <Text style={{
-          fontSize: isSmallDevice ? 24 : isTablet ? 36 : 30,
-          fontWeight: 'bold',
-          color: '#111827',
-          textAlign: 'center'
-        }}>
-          Create your password
-        </Text>
-        <Text style={{
-          color: '#6b7280',
-          textAlign: 'center',
-          fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18,
-          marginTop: 12,
-          paddingHorizontal: isSmallDevice ? 16 : 0
-        }}>
-          Make sure it&apos;s secure
-        </Text>
-      </View>
+    <View className="items-center mb-8">
+      <Text className="text-3xl font-bold text-gray-900 mb-2">Create your password</Text>
+      <Text className="text-base text-gray-500 text-center mb-8">Make sure it&apos;s secure</Text>
 
-      <View style={{ marginVertical: isLandscape ? 16 : 24 }}>
-        <View>
-          <Text style={{
-            fontSize: isSmallDevice ? 14 : 16,
-            fontWeight: '500',
-            color: '#374151',
-            marginBottom: 12
-          }}>
-            Password
-          </Text>
-          <Controller
-            control={passwordForm.control}
-            name="password"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="Minimum 8 characters"
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{
-                    width: '100%',
-                    fontSize: isSmallDevice ? 14 : 16,
-                    paddingVertical: isSmallDevice ? 12 : 16,
-                    paddingHorizontal: isSmallDevice ? 12 : 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: passwordForm.formState.errors.password ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: isSmallDevice ? 48 : isTablet ? 64 : 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {passwordForm.formState.errors.password && (
-                  <Text style={{
-                    marginTop: 8,
-                    fontSize: isSmallDevice ? 12 : 14,
-                    color: '#dc2626'
-                  }}>
-                    {passwordForm.formState.errors.password.message}
-                  </Text>
-                )}
-              </>
-            )}
-          />
-        </View>
+      <View className="w-full">
+        <Controller
+          control={passwordForm.control}
+          name="password"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+              placeholder="Minimum 8 characters"
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              onChangeText={onChange}
+              value={value}
+              placeholderTextColor="#A0AEC0"
+            />
+          )}
+        />
+        {passwordForm.formState.errors.password && (
+          <Text className="text-red-500 text-xs mb-2">{passwordForm.formState.errors.password.message}</Text>
+        )}
 
-        <View style={{ marginTop: isLandscape ? 16 : 24 }}>
-          <Text style={{
-            fontSize: isSmallDevice ? 14 : 16,
-            fontWeight: '500',
-            color: '#374151',
-            marginBottom: 12
-          }}>
-            Confirm Password
-          </Text>
-          <Controller
-            control={passwordForm.control}
-            name="confirmPassword"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="Repeat your password"
-                  secureTextEntry
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{
-                    width: '100%',
-                    fontSize: isSmallDevice ? 14 : 16,
-                    paddingVertical: isSmallDevice ? 12 : 16,
-                    paddingHorizontal: isSmallDevice ? 12 : 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: passwordForm.formState.errors.confirmPassword ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: isSmallDevice ? 48 : isTablet ? 64 : 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {passwordForm.formState.errors.confirmPassword && (
-                  <Text style={{
-                    marginTop: 8,
-                    fontSize: isSmallDevice ? 12 : 14,
-                    color: '#dc2626'
-                  }}>
-                    {passwordForm.formState.errors.confirmPassword.message}
-                  </Text>
-                )}
-              </>
-            )}
-          />
-        </View>
+        <Controller
+          control={passwordForm.control}
+          name="confirmPassword"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+              placeholder="Repeat your password"
+              secureTextEntry
+              autoCapitalize="none"
+              autoCorrect={false}
+              onChangeText={onChange}
+              value={value}
+              placeholderTextColor="#A0AEC0"
+            />
+          )}
+        />
+        {passwordForm.formState.errors.confirmPassword && (
+          <Text className="text-red-500 text-xs mb-2">{passwordForm.formState.errors.confirmPassword.message}</Text>
+        )}
       </View>
     </View>
   );
 
   const renderStep3 = () => (
-    <View style={{ marginVertical: isLandscape ? 16 : 32 }}>
-      <View style={{ marginVertical: 12 }}>
-        <Text style={{
-          fontSize: isSmallDevice ? 24 : isTablet ? 36 : 30,
-          fontWeight: 'bold',
-          color: '#111827',
-          textAlign: 'center'
-        }}>
-          Tell us about yourself
-        </Text>
-        <Text style={{
-          color: '#6b7280',
-          textAlign: 'center',
-          fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18,
-          marginTop: 12,
-          paddingHorizontal: isSmallDevice ? 16 : 0
-        }}>
-          Complete your profile
-        </Text>
-      </View>
+    <View className="items-center mb-8">
+      <Text className="text-3xl font-bold text-gray-900 mb-2">Tell us about yourself</Text>
+      <Text className="text-base text-gray-500 text-center mb-8">Complete your profile</Text>
 
-      <View style={{ marginVertical: isLandscape ? 16 : 24 }}>
-        <View style={{
-          flexDirection: isLandscape && isTablet ? 'row' : 'column',
-          gap: isLandscape && isTablet ? 24 : 12
-        }}>
-          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
-            <Text style={{
-              fontSize: isSmallDevice ? 14 : 16,
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: 12
-            }}>
-              First Name
-            </Text>
-            <Controller
-              control={profileForm.control}
-              name="firstName"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    placeholder="Your first name"
-                    autoCapitalize="words"
-                    style={{
-                      width: '100%',
-                      fontSize: isSmallDevice ? 14 : 16,
-                      paddingVertical: isSmallDevice ? 12 : 16,
-                      paddingHorizontal: isSmallDevice ? 12 : 16,
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderColor: profileForm.formState.errors.firstName ? '#fca5a5' : '#e5e7eb',
-                      backgroundColor: 'white',
-                      color: '#111827',
-                      height: isSmallDevice ? 48 : isTablet ? 64 : 56,
-                      textAlignVertical: 'center',
-                    }}
-                    placeholderTextColor="#9CA3AF"
-                  />
-                  {profileForm.formState.errors.firstName && (
-                    <Text style={{
-                      marginTop: 8,
-                      fontSize: isSmallDevice ? 12 : 14,
-                      color: '#dc2626'
-                    }}>
-                      {profileForm.formState.errors.firstName.message}
-                    </Text>
-                  )}
-                </>
-              )}
-            />
-          </View>
-
-          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
-            <Text style={{
-              fontSize: isSmallDevice ? 14 : 16,
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: 12
-            }}>
-              Last Name
-            </Text>
-            <Controller
-              control={profileForm.control}
-              name="lastName"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    placeholder="Your last name"
-                    autoCapitalize="words"
-                    style={{
-                      width: '100%',
-                      fontSize: isSmallDevice ? 14 : 16,
-                      paddingVertical: isSmallDevice ? 12 : 16,
-                      paddingHorizontal: isSmallDevice ? 12 : 16,
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderColor: profileForm.formState.errors.lastName ? '#fca5a5' : '#e5e7eb',
-                      backgroundColor: 'white',
-                      color: '#111827',
-                      height: isSmallDevice ? 48 : isTablet ? 64 : 56,
-                      textAlignVertical: 'center',
-                    }}
-                    placeholderTextColor="#9CA3AF"
-                  />
-                  {profileForm.formState.errors.lastName && (
-                    <Text style={{
-                      marginTop: 8,
-                      fontSize: isSmallDevice ? 12 : 14,
-                      color: '#dc2626'
-                    }}>
-                      {profileForm.formState.errors.lastName.message}
-                    </Text>
-                  )}
-                </>
-              )}
-            />
-          </View>
-        </View>
-
-        <View style={{ marginTop: isLandscape ? 16 : 24 }}>
-          <Text style={{
-            fontSize: isSmallDevice ? 14 : 16,
-            fontWeight: '500',
-            color: '#374151',
-            marginBottom: 12
-          }}>
-            Username
-          </Text>
+      <View className="w-full">
+        <View className="flex-row gap-3 mb-3">
           <Controller
             control={profileForm.control}
-            name="username"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <>
-                <TextInput
-                  value={value}
-                  onChangeText={onChange}
-                  onBlur={onBlur}
-                  placeholder="@yourusername"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  style={{
-                    width: '100%',
-                    fontSize: isSmallDevice ? 14 : 16,
-                    paddingVertical: isSmallDevice ? 12 : 16,
-                    paddingHorizontal: isSmallDevice ? 12 : 16,
-                    borderRadius: 12,
-                    borderWidth: 2,
-                    borderColor: profileForm.formState.errors.username ? '#fca5a5' : '#e5e7eb',
-                    backgroundColor: 'white',
-                    color: '#111827',
-                    height: isSmallDevice ? 48 : isTablet ? 64 : 56,
-                    textAlignVertical: 'center',
-                  }}
-                  placeholderTextColor="#9CA3AF"
-                />
-                {profileForm.formState.errors.username && (
-                  <Text style={{
-                    marginTop: 8,
-                    fontSize: isSmallDevice ? 12 : 14,
-                    color: '#dc2626'
-                  }}>
-                    {profileForm.formState.errors.username.message}
-                  </Text>
-                )}
-              </>
+            name="firstName"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
+                placeholder="First name"
+                autoCapitalize="words"
+                onChangeText={onChange}
+                value={value}
+                placeholderTextColor="#A0AEC0"
+              />
+            )}
+          />
+          <Controller
+            control={profileForm.control}
+            name="lastName"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
+                placeholder="Last name"
+                autoCapitalize="words"
+                onChangeText={onChange}
+                value={value}
+                placeholderTextColor="#A0AEC0"
+              />
             )}
           />
         </View>
-
-        <View style={{
-          marginTop: isLandscape ? 16 : 24,
-          flexDirection: isLandscape && isTablet ? 'row' : 'column',
-          gap: isLandscape && isTablet ? 24 : (isLandscape ? 16 : 24)
-        }}>
-          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
-            <Text style={{
-              fontSize: isSmallDevice ? 14 : 16,
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: 12
-            }}>
-              Phone Number
-            </Text>
-            <Controller
-              control={profileForm.control}
-              name="phoneNumber"
-              render={({ field: { onChange, onBlur, value } }) => (
-                <>
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    placeholder="+1 234 567 8900"
-                    keyboardType="phone-pad"
-                    style={{
-                      width: '100%',
-                      fontSize: isSmallDevice ? 14 : 16,
-                      paddingVertical: isSmallDevice ? 12 : 16,
-                      paddingHorizontal: isSmallDevice ? 12 : 16,
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderColor: profileForm.formState.errors.phoneNumber ? '#fca5a5' : '#e5e7eb',
-                      backgroundColor: 'white',
-                      color: '#111827',
-                      height: isSmallDevice ? 48 : isTablet ? 64 : 56,
-                      textAlignVertical: 'center',
-                    }}
-                    placeholderTextColor="#9CA3AF"
-                  />
-                  {profileForm.formState.errors.phoneNumber && (
-                    <Text style={{
-                      marginTop: 8,
-                      fontSize: isSmallDevice ? 12 : 14,
-                      color: '#dc2626'
-                    }}>
-                      {profileForm.formState.errors.phoneNumber.message}
-                    </Text>
-                  )}
-                </>
-              )}
-            />
-          </View>
-
-          <View style={{ flex: isLandscape && isTablet ? 1 : undefined }}>
-            <Text style={{
-              fontSize: isSmallDevice ? 14 : 16,
-              fontWeight: '500',
-              color: '#374151',
-              marginBottom: 12
-            }}>
-              Birth Date
-            </Text>
-            <TouchableOpacity
-              onPress={() => setShowDatePicker(true)}
-              style={{
-                width: '100%',
-                paddingVertical: isSmallDevice ? 12 : 16,
-                paddingHorizontal: isSmallDevice ? 12 : 16,
-                borderRadius: 12,
-                borderWidth: 2,
-                borderColor: profileForm.formState.errors.birthdate ? '#fca5a5' : '#e5e7eb',
-                backgroundColor: 'white',
-                height: isSmallDevice ? 48 : isTablet ? 64 : 56,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Text style={{
-                fontSize: isSmallDevice ? 14 : 16,
-                color: profileForm.watch("birthdate") ? '#111827' : '#9CA3AF'
-              }}>
-                {profileForm.watch("birthdate") || 'Select your birth date'}
-              </Text>
-              <Text style={{
-                fontSize: 18,
-                color: '#6b7280'
-              }}>
-                📅
-              </Text>
-            </TouchableOpacity>
-            {profileForm.formState.errors.birthdate && (
-              <Text style={{
-                marginTop: 8,
-                fontSize: isSmallDevice ? 12 : 14,
-                color: '#dc2626'
-              }}>
-                {profileForm.formState.errors.birthdate.message}
-              </Text>
-            )}
-          </View>
-        </View>
-
-        <View style={{ marginTop: isLandscape ? 16 : 24 }}>
-          <Text style={{
-            fontSize: isSmallDevice ? 14 : 16,
-            fontWeight: '500',
-            color: '#374151',
-            marginBottom: 12
-          }}>
-            Profile Picture (optional)
+        {(profileForm.formState.errors.firstName || profileForm.formState.errors.lastName) && (
+          <Text className="text-red-500 text-xs mb-2">
+            {profileForm.formState.errors.firstName?.message || profileForm.formState.errors.lastName?.message}
           </Text>
-          <View style={{
-            flexDirection: isSmallDevice ? 'column' : 'row',
-            alignItems: isSmallDevice ? 'center' : 'center',
-            gap: isSmallDevice ? 12 : 16
-          }}>
-            <View style={{
-              width: isSmallDevice ? 60 : isTablet ? 100 : 80,
-              height: isSmallDevice ? 60 : isTablet ? 100 : 80,
-              backgroundColor: '#00AAEC',
-              borderRadius: isSmallDevice ? 30 : isTablet ? 50 : 40,
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}>
-              <Text style={{
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: isSmallDevice ? 18 : isTablet ? 32 : 24
-              }}>
-                {profileForm.watch("firstName")?.charAt(0).toUpperCase() || "?"}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => Alert.alert("Select Image", "This functionality will be available soon.")}
-              style={{
-                backgroundColor: '#00AAEC',
-                paddingVertical: isSmallDevice ? 10 : 12,
-                paddingHorizontal: isSmallDevice ? 20 : 24,
-                borderRadius: 12,
-                flex: isSmallDevice ? undefined : 1,
-                minWidth: isSmallDevice ? 120 : undefined
-              }}
-            >
-              <Text style={{
-                color: 'white',
-                fontWeight: '600',
-                textAlign: 'center',
-                fontSize: isSmallDevice ? 16 : isTablet ? 20 : 18
-              }}>
-                Select Image
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        )}
+
+        <Controller
+          control={profileForm.control}
+          name="username"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+              placeholder="@yourusername"
+              autoCapitalize="none"
+              autoCorrect={false}
+              onChangeText={onChange}
+              value={value}
+              placeholderTextColor="#A0AEC0"
+            />
+          )}
+        />
+        {profileForm.formState.errors.username && (
+          <Text className="text-red-500 text-xs mb-2">{profileForm.formState.errors.username.message}</Text>
+        )}
+
+        <Controller
+          control={profileForm.control}
+          name="phoneNumber"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+              placeholder="+1 234 567 8900"
+              keyboardType="phone-pad"
+              onChangeText={onChange}
+              value={value}
+              placeholderTextColor="#A0AEC0"
+            />
+          )}
+        />
+        {profileForm.formState.errors.phoneNumber && (
+          <Text className="text-red-500 text-xs mb-2">{profileForm.formState.errors.phoneNumber.message}</Text>
+        )}
+
+        <TouchableOpacity
+          onPress={() => setShowDatePicker(true)}
+          className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 flex-row justify-between items-center"
+        >
+          <Text className={`text-base ${profileForm.watch("birthdate") ? 'text-gray-900' : 'text-gray-400'}`}>
+            {selectedDate ? formatDateForDisplay(selectedDate) : "Select birth date"}
+          </Text>
+          <Text className="text-gray-400">📅</Text>
+        </TouchableOpacity>
+        {profileForm.formState.errors.birthdate && (
+          <Text className="text-red-500 text-xs mb-2">{profileForm.formState.errors.birthdate.message}</Text>
+        )}
       </View>
     </View>
   );
 
+  const currentFormState = getCurrentFormState();
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: '#f8fafc' }}
+      className="flex-1 bg-gradient-to-b from-slate-50 to-white"
     >
+      <View className="h-14" />
+      <View style={{ height: 16 }} />
+
+      {/* Header con logo */}
+      <View className="items-center mb-6">
+        <Svg width={72} height={72} viewBox="0 -4 48 48">
+          <G stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
+            <G transform="translate(-300, -164)" fill="#00AAEC">
+              <Path d="M348,168.735283 C346.236309,169.538462 344.337383,170.081618 342.345483,170.324305 C344.379644,169.076201 345.940482,167.097147 346.675823,164.739617 C344.771263,165.895269 342.666667,166.736006 340.418384,167.18671 C338.626519,165.224991 336.065504,164 333.231203,164 C327.796443,164 323.387216,168.521488 323.387216,174.097508 C323.387216,174.88913 323.471738,175.657638 323.640782,176.397255 C315.456242,175.975442 308.201444,171.959552 303.341433,165.843265 C302.493397,167.339834 302.008804,169.076201 302.008804,170.925244 C302.008804,174.426869 303.747139,177.518238 306.389857,179.329722 C304.778306,179.280607 303.256911,178.821235 301.9271,178.070061 L301.9271,178.194294 C301.9271,183.08848 305.322064,187.17082 309.8299,188.095341 C309.004402,188.33225 308.133826,188.450704 307.235077,188.450704 C306.601162,188.450704 305.981335,188.390033 305.381229,188.271578 C306.634971,192.28169 310.269414,195.2026 314.580032,195.280607 C311.210424,197.99061 306.961789,199.605634 302.349709,199.605634 C301.555203,199.605634 300.769149,199.559408 300,199.466956 C304.358514,202.327194 309.53689,204 315.095615,204 C333.211481,204 343.114633,188.615385 343.114633,175.270495 C343.114633,174.831347 343.106181,174.392199 343.089276,173.961719 C345.013559,172.537378 346.684275,170.760563 348,168.735283" />
+            </G>
+          </G>
+        </Svg>
+      </View>
+
+      {/* Progress indicator */}
+      <View className="flex-row justify-center gap-3 mb-8">
+        {[1, 2, 3].map((step) => (
+          <View
+            key={step}
+            className={`w-3 h-3 rounded-full ${step <= currentStep ? 'bg-[#00AAEC]' : 'bg-gray-300'
+              }`}
+          />
+        ))}
+      </View>
+
       <ScrollView
-        style={{ flex: 1 }}
+        className="flex-1 px-8"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingHorizontal: isSmallDevice ? 16 : isTablet ? 32 : 20,
-          paddingTop: isLandscape ? 20 : isSmallDevice ? 40 : 60,
-          paddingBottom: isLandscape ? 20 : 40
-        }}
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
       >
-        <View style={{ flex: 1, justifyContent: isLandscape ? 'flex-start' : 'center' }}>
-          {/* Header */}
-          <View style={{ marginBottom: isLandscape ? 16 : 24 }}>
-            <View style={{ alignItems: 'center', marginBottom: 16 }}>
-              <Svg
-                width={isSmallDevice ? 48 : isTablet ? 72 : 56}
-                height={isSmallDevice ? 48 : isTablet ? 72 : 56}
-                viewBox="0 -4 48 48"
-              >
-                <G stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
-                  <G transform="translate(-300, -164)" fill="#00AAEC">
-                    <Path d="M348,168.735283 C346.236309,169.538462 344.337383,170.081618 342.345483,170.324305 C344.379644,169.076201 345.940482,167.097147 346.675823,164.739617 C344.771263,165.895269 342.666667,166.736006 340.418384,167.18671 C338.626519,165.224991 336.065504,164 333.231203,164 C327.796443,164 323.387216,168.521488 323.387216,174.097508 C323.387216,174.88913 323.471738,175.657638 323.640782,176.397255 C315.456242,175.975442 308.201444,171.959552 303.341433,165.843265 C302.493397,167.339834 302.008804,169.076201 302.008804,170.925244 C302.008804,174.426869 303.747139,177.518238 306.389857,179.329722 C304.778306,179.280607 303.256911,178.821235 301.9271,178.070061 L301.9271,178.194294 C301.9271,183.08848 305.322064,187.17082 309.8299,188.095341 C309.004402,188.33225 308.133826,188.450704 307.235077,188.450704 C306.601162,188.450704 305.981335,188.390033 305.381229,188.271578 C306.634971,192.28169 310.269414,195.2026 314.580032,195.280607 C311.210424,197.99061 306.961789,199.605634 302.349709,199.605634 C301.555203,199.605634 300.769149,199.559408 300,199.466956 C304.358514,202.327194 309.53689,204 315.095615,204 C333.211481,204 343.114633,204 343.114633,175.270495 C343.114633,174.831347 343.106181,174.392199 343.089276,173.961719 C345.013559,172.537378 346.684275,170.760563 348,168.735283" />
-                  </G>
-                </G>
-              </Svg>
-            </View>
+        <View className="w-full max-w-sm mx-auto">
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
 
-            <View style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              gap: 12,
-              marginBottom: isLandscape ? 16 : 24
-            }}>
-              {[1, 2, 3].map((step) => (
-                <View
-                  key={step}
-                  style={{
-                    width: isSmallDevice ? 12 : 16,
-                    height: isSmallDevice ? 12 : 16,
-                    borderRadius: isSmallDevice ? 6 : 8,
-                    backgroundColor: step <= currentStep ? "#00AAEC" : "#d1d5db"
-                  }}
-                />
-              ))}
-            </View>
-          </View>
-
-          {/* Form Container */}
-          <View style={{
-            backgroundColor: 'white',
-            borderRadius: isSmallDevice ? 16 : isTablet ? 32 : 24,
-            padding: isSmallDevice ? 20 : isTablet ? 40 : 32,
-            marginBottom: isLandscape ? 16 : 32,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 5,
-          }}>
-            {currentStep === 1 && renderStep1()}
-            {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
-
-            {/* Navigation Buttons */}
-            <View style={{ marginTop: 5 }}>
-              <TouchableOpacity
-                onPress={handleNext}
-                disabled={!validateCurrentStep()}
-                style={{
-                  width: '100%',
-                  paddingVertical: isSmallDevice ? 14 : isTablet ? 20 : 16,
-                  paddingHorizontal: isSmallDevice ? 20 : 24,
-                  borderRadius: isSmallDevice ? 12 : 16,
-                  backgroundColor: validateCurrentStep() ? '#00AAEC' : '#d1d5db',
-                }}
-              >
-                <Text style={{
-                  fontWeight: 'bold',
-                  fontSize: isSmallDevice ? 18 : isTablet ? 24 : 20,
-                  textAlign: 'center',
-                  color: validateCurrentStep() ? 'white' : '#6b7280'
-                }}>
-                  {currentStep === 3 ? "Create Account" : "Next"}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Footer */}
-          <View style={{ marginTop: isLandscape ? 16 : 24 }}>
-            <Text style={{
-              color: '#6b7280',
-              fontSize: isSmallDevice ? 14 : isTablet ? 18 : 16,
-              textAlign: 'center'
-            }}>
-              Already have an account?{" "}
-              <Text style={{ color: '#00AAEC', fontWeight: '500' }}>
-                Sign in
+          <TouchableOpacity
+            className={`py-4 px-8 rounded-full shadow-lg mt-4 ${currentFormState.isValid ? 'bg-[#00AAEC]' : 'bg-gray-300'
+              }`}
+            onPress={handleNext}
+            activeOpacity={0.9}
+            disabled={!currentFormState.isValid || currentFormState.isSubmitting}
+          >
+            {currentFormState.isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white font-bold text-lg text-center">
+                {currentStep === 3 ? "Create Account" : "Next"}
               </Text>
-            </Text>
-          </View>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Footer */}
+      <View className="pb-8 px-8">
+        <TouchableOpacity
+          onPress={() => router.push('/sign-in')}
+          activeOpacity={0.8}
+        >
+          <Text className="text-gray-500 text-base text-center">
+            Already have an account?{' '}
+            <Text className="text-[#00AAEC] font-semibold">Sign In</Text>
+          </Text>
+        </TouchableOpacity>
+        <View className="mt-4">
+          <Text className="text-center text-gray-400 text-sm">
+            © 2025 TwitterClone.
+          </Text>
+        </View>
+      </View>
 
       <DatePickerModal />
     </KeyboardAvoidingView>
