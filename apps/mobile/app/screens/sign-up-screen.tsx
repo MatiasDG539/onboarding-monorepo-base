@@ -31,7 +31,7 @@ interface SignUpScreenProps {
   onBack?: () => void;
 }
 
-export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: SignUpScreenProps) {
+const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps) => {
   const [useEmail, setUseEmail] = useState(true);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -340,11 +340,11 @@ export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: Si
             return;
           }
 
-          if (useEmail) {
+          if (useEmail && 'user' in result && result.user) {
             const email = emailOrPhoneForm.getValues("emailOrPhone");
             const sendResult = await sendEmailMutation.mutateAsync({ to: email });
             if (sendResult.success) {
-              router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+              router.push(`/verify-email?email=${encodeURIComponent(email)}&userId=${result.user.id}`);
             } else {
               Alert.alert("Error", sendResult.error || "Error sending verification code");
             }
@@ -562,7 +562,6 @@ export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: Si
       <View className="h-14" />
       <View style={{ height: 16 }} />
 
-      {/* Header con logo */}
       <View className="items-center mb-6">
         <Svg width={72} height={72} viewBox="0 -4 48 48">
           <G stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">
@@ -633,4 +632,6 @@ export default function SignUpScreen({ currentStep, setCurrentStep, onBack }: Si
       <DatePickerModal />
     </KeyboardAvoidingView>
   );
-}
+};
+
+export default SignUpScreen;

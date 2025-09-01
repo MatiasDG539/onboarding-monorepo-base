@@ -1,32 +1,49 @@
-
-
-
 import React, { useLayoutEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { SignInSchema, SignInData } from '../../components/forms/schemas';
+import { trpc } from '../../lib/trpc';
+import { useAuthStore } from '../../lib/auth-store';
 
 const SignInScreen = () => {
     const router = useRouter();
     const navigation = useNavigation();
+    const { login } = useAuthStore();
+
+    const loginMutation = trpc.auth.login.useMutation();
 
     useLayoutEffect(() => {
         navigation.setOptions({
             headerBackTitle: 'Back',
         });
     }, [navigation]);
+    
     const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignInData>({
         resolver: zodResolver(SignInSchema),
         mode: 'onTouched',
     });
 
     const onSubmit: SubmitHandler<SignInData> = async (data) => {
-        await new Promise((r) => setTimeout(r, 1200));
-        router.push('/');
+        try {
+            const result = await loginMutation.mutateAsync(data);
+            
+            if (!result.success) {
+                Alert.alert("Error", 'error' in result ? result.error : "Login failed");
+                return;
+            }
+
+            if ('user' in result && result.user) {
+                login(result.user);
+                router.push('/');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            Alert.alert("Error", "Login failed. Please try again.");
+        }
     };
 
     return (
@@ -54,6 +71,7 @@ const SignInScreen = () => {
                         render={({ field: { onChange, value } }) => (
                             <TextInput
                                 className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+                                style={{ minHeight: 48, paddingVertical: 10 }}
                                 placeholder="Email or phone number"
                                 autoCapitalize="none"
                                 keyboardType="email-address"
@@ -72,6 +90,7 @@ const SignInScreen = () => {
                         render={({ field: { onChange, value } }) => (
                             <TextInput
                                 className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+                                style={{ minHeight: 48, paddingVertical: 10 }}
                                 placeholder="Password"
                                 secureTextEntry
                                 autoCapitalize="none"
@@ -88,9 +107,9 @@ const SignInScreen = () => {
                         className="bg-[#00AAEC] py-4 px-8 rounded-full shadow-lg mt-2"
                         onPress={handleSubmit(onSubmit)}
                         activeOpacity={0.9}
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || loginMutation.isPending}
                     >
-                        {isSubmitting ? (
+                        {(isSubmitting || loginMutation.isPending) ? (
                             <ActivityIndicator color="#fff" />
                         ) : (
                             <Text className="text-white font-bold text-lg text-center">Sign In</Text>
