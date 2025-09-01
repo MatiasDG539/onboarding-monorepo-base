@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,8 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
   const [useEmail, setUseEmail] = useState(true);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const router = useRouter();
   const navigation = useNavigation();
@@ -66,6 +68,53 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
       profilePicture: null,
     }
   });
+
+  const utils = trpc.useUtils();
+
+  // Limpiar el error cuando el email cambie
+  useEffect(() => {
+    const subscription = emailOrPhoneForm.watch((value, { name }) => {
+      if (name === "emailOrPhone") {
+        setEmailError(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [emailOrPhoneForm]);
+
+  const checkEmailAvailability = async (email: string): Promise<boolean> => {
+    if (!email || !email.includes('@')) {
+      setEmailError(null);
+      return false;
+    }
+    
+    // Validar formato de email básico antes de verificar en el servidor
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setEmailError(null); // No mostrar error aquí, ya que react-hook-form se encarga de la validación de formato
+      return false;
+    }
+    
+    setIsCheckingEmail(true);
+    setEmailError(null);
+    
+    try {
+      const result = await utils.auth.checkEmailExists.fetch({ email });
+      
+      if (result.exists) {
+        setEmailError('This email is already in use. Please try another one.');
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error checking email:', error);
+      setEmailError('Error checking email. Please try again.');
+      return false;
+    } finally {
+      setIsCheckingEmail(false);
+    }
+  };
 
   const formatDate = (date: Date): string => {
     const year = date.getFullYear();
@@ -321,7 +370,16 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
   const handleNext = async () => {
     if (currentStep === 1) {
       const ok = await emailOrPhoneForm.trigger();
-      if (ok) setCurrentStep(2);
+      if (ok) {
+        // Verificar si el email ya está en uso
+        const email = emailOrPhoneForm.getValues("emailOrPhone");
+        const isEmailAvailable = await checkEmailAvailability(email);
+        
+        if (isEmailAvailable) {
+          setCurrentStep(2);
+        }
+        // Si el email no está disponible, no avanzamos y el error ya se muestra
+      }
     } else if (currentStep === 2) {
       const ok = await passwordForm.trigger();
       if (ok) setCurrentStep(3);
@@ -390,7 +448,13 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
-                onChangeText={onChange}
+                onChangeText={(text) => {
+                  onChange(text);
+                  // Limpiar el error inmediatamente cuando el usuario escriba
+                  if (emailError) {
+                    setEmailError(null);
+                  }
+                }}
                 value={value}
                 placeholderTextColor="#A0AEC0"
                 numberOfLines={1}
@@ -403,6 +467,17 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
         />
         {emailOrPhoneForm.formState.errors.emailOrPhone && (
           <Text className="text-red-500 text-xs mb-2">{emailOrPhoneForm.formState.errors.emailOrPhone.message}</Text>
+        )}
+        
+        {isCheckingEmail && (
+          <View className="flex-row items-center mb-2">
+            <ActivityIndicator size="small" color="#00AAEC" className="mr-2" />
+            <Text className="text-gray-500 text-xs">Checking email availability...</Text>
+          </View>
+        )}
+        
+        {emailError && (
+          <Text className="text-red-500 text-xs mb-2">{emailError}</Text>
         )}
       </View>
     </View>
@@ -594,13 +669,13 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
           {currentStep === 3 && renderStep3()}
 
           <TouchableOpacity
-            className={`py-4 px-8 rounded-full shadow-lg mt-4 ${currentFormState.isValid ? 'bg-[#00AAEC]' : 'bg-gray-300'
+            className={`py-4 px-8 rounded-full shadow-lg mt-4 ${currentFormState.isValid && !isCheckingEmail ? 'bg-[#00AAEC]' : 'bg-gray-300'
               }`}
             onPress={handleNext}
             activeOpacity={0.9}
-            disabled={!currentFormState.isValid || currentFormState.isSubmitting}
+            disabled={!currentFormState.isValid || currentFormState.isSubmitting || isCheckingEmail}
           >
-            {currentFormState.isSubmitting ? (
+            {currentFormState.isSubmitting || isCheckingEmail ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text className="text-white font-bold text-lg text-center">
