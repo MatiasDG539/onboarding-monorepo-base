@@ -71,7 +71,6 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
 
   const utils = trpc.useUtils();
 
-  // Limpiar el error cuando el email cambie
   useEffect(() => {
     const subscription = emailOrPhoneForm.watch((value, { name }) => {
       if (name === "emailOrPhone") {
@@ -88,10 +87,9 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
       return false;
     }
     
-    // Validar formato de email básico antes de verificar en el servidor
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setEmailError(null); // No mostrar error aquí, ya que react-hook-form se encarga de la validación de formato
+      setEmailError(null);
       return false;
     }
     
@@ -286,7 +284,7 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
               </Text>
 
               <View className="flex-row justify-between items-center" style={{ height: 250 }}>
-                {/* Day Picker */}
+
                 <View className="flex-1">
                   <Text className="text-center text-sm font-medium text-gray-700 mb-2">Day</Text>
                   <WheelPicker
@@ -371,14 +369,12 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
     if (currentStep === 1) {
       const ok = await emailOrPhoneForm.trigger();
       if (ok) {
-        // Verificar si el email ya está en uso
         const email = emailOrPhoneForm.getValues("emailOrPhone");
         const isEmailAvailable = await checkEmailAvailability(email);
         
         if (isEmailAvailable) {
           setCurrentStep(2);
         }
-        // Si el email no está disponible, no avanzamos y el error ya se muestra
       }
     } else if (currentStep === 2) {
       const ok = await passwordForm.trigger();
@@ -450,7 +446,6 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
                 autoCorrect={false}
                 onChangeText={(text) => {
                   onChange(text);
-                  // Limpiar el error inmediatamente cuando el usuario escriba
                   if (emailError) {
                     setEmailError(null);
                   }
