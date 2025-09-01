@@ -352,9 +352,12 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
             <Text className="text-[#00AAEC] text-base">Back</Text>
           </TouchableOpacity>
         ),
+
+        headerBackTitle: 'Back',
+
       });
     } else {
-      navigation.setOptions({ headerLeft: undefined, headerBackVisible: true });
+      navigation.setOptions({ headerLeft: undefined, headerBackVisible: true, headerBackTitle: 'Back' });
     }
   }, [navigation, currentStep, onBack]);
 
