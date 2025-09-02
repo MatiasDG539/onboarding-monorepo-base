@@ -7,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { TRPCProvider } from '../components/trpc-provider';
+import { TRPCProvider } from '../lib/trpc-provider';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
