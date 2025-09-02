@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import HomeScreen from '@/components/home-screen';
+import WelcomeScreen from '@/components/welcome-screen';
 import SplashScreen from '@/components/splash-screen';
 
-export default function Home() {
+const Welcome = () => {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -17,5 +17,7 @@ export default function Home() {
     return <SplashScreen />;
   }
 
-  return <HomeScreen />;
+  return <WelcomeScreen />;
 }
+
+export default Welcome;

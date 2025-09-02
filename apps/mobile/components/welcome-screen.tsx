@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 
-const HomeScreen = () => {
+const WelcomeScreen = () => {
   const router = useRouter();
 
   return (
@@ -71,4 +71,4 @@ const HomeScreen = () => {
   );
 };
 
-export default HomeScreen;
+export default WelcomeScreen;
