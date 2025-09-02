@@ -15,7 +15,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { trpc } from '../../lib/trpc';
 import Svg, { Path } from 'react-native-svg';
 
-export default function VerifyEmailScreen() {
+const VerifyEmailScreen = () => {
   const router = useRouter();
   const { email = "user@example.com" } = useLocalSearchParams<{ email: string }>();
   const { width, height } = useWindowDimensions();
@@ -338,6 +338,8 @@ export default function VerifyEmailScreen() {
     </KeyboardAvoidingView>
   );
 }
+
+export default VerifyEmailScreen;
 
 const createMobileStyles = (isSmallDevice: boolean, isLargeDevice: boolean, isLandscape: boolean, width: number) => StyleSheet.create({
   container: {
