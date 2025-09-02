@@ -38,7 +38,7 @@ const SignInScreen = () => {
 
             if ('user' in result && result.user) {
                 login(result.user);
-                router.push('/');
+                router.push('/home-screen');
             }
         } catch (error) {
             console.error('Login error:', error);

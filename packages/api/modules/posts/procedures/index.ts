@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { router, publicProcedure } from '../../../trpc/base';
 
 export const postsRouter = router({
-  // Crear un post
   create: publicProcedure
     .input(z.object({
       content: z.string().min(1),
@@ -49,7 +48,6 @@ export const postsRouter = router({
       }
     }),
 
-  // Obtener feed de posts
   getFeed: publicProcedure
     .input(z.object({
       limit: z.number().optional().default(10),
@@ -84,7 +82,7 @@ export const postsRouter = router({
                 }
               },
               orderBy: { createdAt: 'desc' },
-              take: 3, // Solo mostrar los últimos 3 comentarios
+              take: 3,
             },
             likes: true,
             _count: {
@@ -112,7 +110,6 @@ export const postsRouter = router({
       }
     }),
 
-  // Dar like a un post
   toggleLike: publicProcedure
     .input(z.object({
       postId: z.string(),
@@ -128,13 +125,11 @@ export const postsRouter = router({
         });
 
         if (existingLike) {
-          // Remove like
           await ctx.prisma.like.delete({
             where: { id: existingLike.id }
           });
           return { success: true, liked: false };
         } else {
-          // Add like
           await ctx.prisma.like.create({
             data: {
               postId: input.postId,
@@ -149,7 +144,6 @@ export const postsRouter = router({
       }
     }),
 
-  // Agregar comentario
   addComment: publicProcedure
     .input(z.object({
       postId: z.string(),

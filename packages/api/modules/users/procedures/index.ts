@@ -2,7 +2,6 @@ import { z } from 'zod';
 import { router, publicProcedure } from '../../../trpc/base';
 
 export const usersRouter = router({
-  // Obtener perfil de usuario
   getProfile: publicProcedure
     .input(z.string())
     .query(async ({ input, ctx }) => {
@@ -37,7 +36,6 @@ export const usersRouter = router({
       }
     }),
 
-  // Actualizar perfil
   updateProfile: publicProcedure
     .input(z.object({
       userId: z.string(),
@@ -70,7 +68,6 @@ export const usersRouter = router({
       }
     }),
 
-  // Buscar usuarios
   searchUsers: publicProcedure
     .input(z.object({
       query: z.string().min(1),

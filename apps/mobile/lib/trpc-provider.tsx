@@ -16,7 +16,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
   }));
   const trpcUrl = process.env.EXPO_PUBLIC_TRPC_URL;
   if (!trpcUrl) {
-    throw new Error('EXPO_PUBLIC_TRPC_URL no está definida en el entorno. Por favor, configúrala en el archivo .env');
+    throw new Error('EXPO_PUBLIC_TRPC_URL is not defined in the environment');
   }
   const [trpcClient] = useState(() =>
     trpc.createClient({
