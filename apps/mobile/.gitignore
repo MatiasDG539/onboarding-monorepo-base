@@ -35,6 +35,8 @@ yarn-error.*
 
 # local
 .vscode/
+.android/
+.ios/
 
 # typescript
 *.tsbuildinfo
