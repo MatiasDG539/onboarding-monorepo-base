@@ -118,18 +118,14 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
         const userData = form.getValues();
         try {
           const result = await registerMutation.mutateAsync(userData);
-          if (!result.success) {
-            Alert.alert("Error", 'error' in result ? result.error : "Error creating user");
-            return;
-          }
 
-          if (useEmail && 'user' in result && result.user) {
+          if (useEmail && result.user) {
             const email = form.getValues("emailOrPhone");
-            const sendResult = await sendEmailMutation.mutateAsync({ to: email });
-            if (sendResult.success) {
+            try {
+              await sendEmailMutation.mutateAsync({ to: email });
               router.push(`/verify-email?email=${encodeURIComponent(email)}&userId=${result.user.id}`);
-            } else {
-              Alert.alert("Error", sendResult.error || "Error sending verification code");
+            } catch (emailError) {
+              Alert.alert("Error", emailError instanceof Error ? emailError.message : "Error sending verification code");
             }
           } else {
             Alert.alert(
@@ -149,7 +145,7 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
           }
         } catch (error) {
           console.error('Registration error:', error);
-          Alert.alert("Error", "Error creating user. Please try again.");
+          Alert.alert("Error", error instanceof Error ? error.message : "Error creating user. Please try again.");
         }
       }
     }

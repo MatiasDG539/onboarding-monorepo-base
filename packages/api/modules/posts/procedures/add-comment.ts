@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../../../trpc/base';
+import { TRPCError } from '@trpc/server';
 
 export const addCommentRouter = router({
   addComment: publicProcedure
@@ -29,10 +30,13 @@ export const addCommentRouter = router({
           }
         });
         
-        return { success: true, comment };
+        return { comment };
       } catch (error) {
         console.error('Add comment error:', error);
-        return { success: false, error: 'Failed to add comment' };
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to add comment',
+        });
       }
     }),
 });

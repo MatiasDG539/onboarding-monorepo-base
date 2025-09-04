@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../../../trpc/base';
+import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
 
 export const loginRouter = router({
@@ -20,21 +21,29 @@ export const loginRouter = router({
         });
 
         if (!user) {
-          return { success: false, error: 'User not found' };
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'User not found',
+          });
         }
 
         const isValidPassword = await bcrypt.compare(input.password, user.password);
         
         if (!isValidPassword) {
-          return { success: false, error: 'Invalid password' };
+          throw new TRPCError({
+            code: 'UNAUTHORIZED',
+            message: 'Invalid password',
+          });
         }
 
         if (!user.isVerified) {
-          return { success: false, error: 'Please verify your email before signing in' };
+          throw new TRPCError({
+            code: 'PRECONDITION_FAILED',
+            message: 'Please verify your email before signing in',
+          });
         }
 
         return {
-          success: true,
           user: {
             id: user.id,
             firstName: user.firstName,
@@ -45,8 +54,14 @@ export const loginRouter = router({
           }
         };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         console.error('Login error:', error);
-        return { success: false, error: 'Login failed' };
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Login failed',
+        });
       }
     }),
 });

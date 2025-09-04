@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../../../trpc/base';
+import { TRPCError } from '@trpc/server';
 
 export const checkEmailExistsRouter = router({
   checkEmailExists: publicProcedure
@@ -21,7 +22,10 @@ export const checkEmailExistsRouter = router({
         };
       } catch (error) {
         console.error('Check email exists error:', error);
-        return { exists: false, email: input.email };
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to check email existence',
+        });
       }
     }),
 });

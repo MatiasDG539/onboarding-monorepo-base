@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../../../trpc/base';
+import { TRPCError } from '@trpc/server';
 
 export const toggleLikeRouter = router({
   toggleLike: publicProcedure
@@ -20,7 +21,7 @@ export const toggleLikeRouter = router({
           await ctx.prisma.like.delete({
             where: { id: existingLike.id }
           });
-          return { success: true, liked: false };
+          return { liked: false };
         } else {
           await ctx.prisma.like.create({
             data: {
@@ -28,11 +29,14 @@ export const toggleLikeRouter = router({
               authorId: input.authorId,
             }
           });
-          return { success: true, liked: true };
+          return { liked: true };
         }
       } catch (error) {
         console.error('Toggle like error:', error);
-        return { success: false, error: 'Failed to toggle like' };
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to toggle like',
+        });
       }
     }),
 });

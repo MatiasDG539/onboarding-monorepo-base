@@ -1,6 +1,7 @@
 
 import { z } from "zod";
 import { router, publicProcedure } from '../../../trpc/base';
+import { TRPCError } from '@trpc/server';
 
 const verifyCodeInputSchema = z.object({
 	email: z.string().email(),
@@ -17,24 +18,36 @@ export const verifyCodeRouter = router({
 				});
 
 				if (!user) {
-					return { success: false, error: 'User not found' };
+					throw new TRPCError({
+						code: 'NOT_FOUND',
+						message: 'User not found',
+					});
 				}
 
 				const inputCode = parseInt(input.code.trim());
 				
-				if (user.verificationCode === inputCode) {
-					await ctx.prisma.user.update({
-						where: { id: user.id },
-						data: { isVerified: true }
+				if (user.verificationCode !== inputCode) {
+					throw new TRPCError({
+						code: 'BAD_REQUEST',
+						message: 'Invalid verification code',
 					});
-					
-					return { success: true };
 				}
 
-				return { success: false, error: 'Invalid verification code' };
+				await ctx.prisma.user.update({
+					where: { id: user.id },
+					data: { isVerified: true }
+				});
+				
+				return { success: true };
 			} catch (error) {
+				if (error instanceof TRPCError) {
+					throw error;
+				}
 				console.error('Verification error:', error);
-				return { success: false, error: 'Verification failed' };
+				throw new TRPCError({
+					code: 'INTERNAL_SERVER_ERROR',
+					message: 'Verification failed',
+				});
 			}
 		})
 });

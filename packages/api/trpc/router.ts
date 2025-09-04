@@ -13,9 +13,7 @@ export const emailRouter = router({
     .mutation(async ({ input }: { input: { to: string } }) => {
       const result = await sendEmail(input.to);
       return {
-        success: result.success,
-        error: result.error,
-        code: result.code ? 'Code sent successfully' : undefined,
+        code: 'Code sent successfully',
       };
     }),
 });

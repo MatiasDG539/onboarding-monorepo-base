@@ -1,11 +1,15 @@
 import { render } from "@react-email/render";
 import { createTransporter } from "../config";
 import { ActivationEmail } from "../templates/activation-email";
+import { TRPCError } from '@trpc/server';
 import prisma from 'database';
 
-export async function sendEmail(to: string): Promise<{ success: boolean; error?: string; code?: string }> {
+export async function sendEmail(to: string): Promise<{ code: string }> {
 	if (!to) {
-		return { success: false, error: "Email required" };
+		throw new TRPCError({
+			code: 'BAD_REQUEST',
+			message: 'Email required',
+		});
 	}
 	
 	const normalizedEmail = to.trim().toLowerCase();
@@ -17,7 +21,10 @@ export async function sendEmail(to: string): Promise<{ success: boolean; error?:
 		});
 
 		if (!user) {
-			return { success: false, error: "User not found" };
+			throw new TRPCError({
+				code: 'NOT_FOUND',
+				message: 'User not found',
+			});
 		}
 
 		const code = user.verificationCode.toString();
@@ -30,11 +37,16 @@ export async function sendEmail(to: string): Promise<{ success: boolean; error?:
 			subject: "Activation code",
 			html,
 		});
-		return { success: true, code };
+		return { code };
 
 	} catch (err) {
+		if (err instanceof TRPCError) {
+			throw err;
+		}
 		console.error('Send email error:', err);
-
-		return { success: false, error: "Error sending email" };
+		throw new TRPCError({
+			code: 'INTERNAL_SERVER_ERROR',
+			message: 'Error sending email',
+		});
 	}
 }

@@ -109,32 +109,15 @@ const VerifyEmailScreen = () => {
     setError('');
 
     try {
-      const result = await verifyCodeMutation.mutateAsync({
+      await verifyCodeMutation.mutateAsync({
         email,
         code: codeToVerify,
       });
 
-      if (result.success) {
-        router.replace('/(tabs)');
-      } else {
-        setError("Invalid code. Please check and try again.");
-        setCode(['', '', '', '', '', '']);
-        triggerShakeAnimation();
-        setTimeout(() => inputRefs.current[0]?.focus(), 100);
-      }
+      router.replace('/(tabs)');
     } catch (err) {
       console.error('Verification error:', err);
-
-      if (err instanceof Error) {
-        if (err.message.includes('Invalid verification code')) {
-          setError("Invalid code. Please check and try again.");
-        } else {
-          setError("Something went wrong. Please try again.");
-        }
-      } else {
-        setError("Connection error. Please check your internet connection.");
-      }
-
+      setError(err instanceof Error ? err.message : "Invalid code. Please check and try again.");
       setCode(['', '', '', '', '', '']);
       triggerShakeAnimation();
       setTimeout(() => inputRefs.current[0]?.focus(), 100);
@@ -147,27 +130,18 @@ const VerifyEmailScreen = () => {
     if (!canResend) return;
 
     try {
-      const result = await sendEmailMutation.mutateAsync({
+      await sendEmailMutation.mutateAsync({
         to: email,
       });
 
-      if (result.success) {
-        setResendTimer(60);
-        setCanResend(false);
-        setCode(['', '', '', '', '', '']);
-        setError('');
-        inputRefs.current[0]?.focus();
-      } else {
-        setError(result.error || "Failed to resend code. Please try again.");
-      }
+      setResendTimer(60);
+      setCanResend(false);
+      setCode(['', '', '', '', '', '']);
+      setError('');
+      inputRefs.current[0]?.focus();
     } catch (err) {
       console.error('Resend error:', err);
-
-      if (err instanceof Error) {
-        setError("Failed to resend code. Please try again.");
-      } else {
-        setError("Connection error. Please check your internet connection.");
-      }
+      setError(err instanceof Error ? err.message : "Failed to resend code. Please try again.");
     }
   };
 

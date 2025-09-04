@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../../../trpc/base';
+import { TRPCError } from '@trpc/server';
 
 export const updateProfileRouter = router({
   updateProfile: publicProcedure
@@ -27,10 +28,13 @@ export const updateProfileRouter = router({
           }
         });
         
-        return { success: true, user };
+        return { user };
       } catch (error) {
         console.error('Update profile error:', error);
-        return { success: false, error: 'Failed to update profile' };
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update profile',
+        });
       }
     }),
 });

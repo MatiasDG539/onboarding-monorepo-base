@@ -31,18 +31,13 @@ const SignInScreen = () => {
         try {
             const result = await loginMutation.mutateAsync(data);
             
-            if (!result.success) {
-                Alert.alert("Error", 'error' in result ? result.error : "Login failed");
-                return;
-            }
-
-            if ('user' in result && result.user) {
+            if (result.user) {
                 login(result.user);
                 router.push('/home-screen');
             }
         } catch (error) {
             console.error('Login error:', error);
-            Alert.alert("Error", "Login failed. Please try again.");
+            Alert.alert("Error", error instanceof Error ? error.message : "Login failed. Please try again.");
         }
     };
 

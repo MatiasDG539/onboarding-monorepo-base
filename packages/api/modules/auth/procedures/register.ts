@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../../../trpc/base';
+import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
 
 const userDataSchema = z.object({
@@ -28,7 +29,10 @@ export const registerRouter = router({
         });
 
         if (existingUser) {
-          return { success: false, error: 'User already exists' };
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'User already exists',
+          });
         }
 
         const hashedPassword = await bcrypt.hash(input.password, 10);
@@ -49,8 +53,7 @@ export const registerRouter = router({
           }
         });
 
-        return { 
-          success: true, 
+        return {
           user: {
             id: user.id,
             firstName: user.firstName,
@@ -61,8 +64,14 @@ export const registerRouter = router({
           verificationCode: user.verificationCode
         };
       } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
         console.error('Registration error:', error);
-        return { success: false, error: 'Failed to create user' };
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create user',
+        });
       }
     }),
 });
