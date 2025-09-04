@@ -188,17 +188,12 @@ const RenderPosts = () => {
     <PostCard post={item} onLike={handleLike} currentUserId={currentUserId} />
   );
 
-  const renderFooter = () => {
-    if (isFetchingNextPage) {
-      return (
-        <View className="flex-row justify-center items-center p-5">
-          <ActivityIndicator size="small" color="#1DA1F2" />
-          <Text className="ml-2 text-sm text-gray-500">Loading more posts...</Text>
-        </View>
-      );
-    }
-    return null;
-  };
+  const renderFooter = () => isFetchingNextPage ? (
+    <View className="flex-row justify-center items-center p-5">
+      <ActivityIndicator size="small" color="#1DA1F2" />
+      <Text className="ml-2 text-sm text-gray-500">Loading more posts...</Text>
+    </View>
+  ) : null;
 
   const renderEmpty = () => (
     <View className="flex-1 justify-center items-center p-5">
