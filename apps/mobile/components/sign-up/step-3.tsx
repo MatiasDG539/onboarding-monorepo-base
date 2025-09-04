@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView } from 'reac
 import { useFormContext, Controller } from 'react-hook-form';
 import { SignUpData } from '../../lib/forms/schemas';
 
-interface Step3Props {
+type Step3Props = {
   showDatePicker: boolean;
   setShowDatePicker: (show: boolean) => void;
   selectedDate: Date | null;

@@ -4,7 +4,7 @@ import { useFormContext, Controller } from 'react-hook-form';
 import { trpc } from '../../lib/trpc';
 import { SignUpData } from '../../lib/forms/schemas';
 
-interface Step1Props {
+type Step1Props = {
   onEmailValidated?: (isValid: boolean) => void;
 }
 

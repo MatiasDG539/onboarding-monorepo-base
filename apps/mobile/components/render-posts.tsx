@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { trpc } from '../lib/trpc';
 
-interface Author {
+type Author = {
   id: string;
   firstName: string;
   lastName: string;
@@ -19,20 +19,20 @@ interface Author {
   avatar: string;
 }
 
-interface Comment {
+type Comment = {
   id: string;
   content: string;
   createdAt: string;
   author: Author;
 }
 
-interface Like {
+type Like = {
   id: string;
   authorId: string;
   postId: string;
 }
 
-interface Post {
+type Post = {
   id: string;
   content: string;
   createdAt: string;

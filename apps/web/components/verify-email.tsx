@@ -7,7 +7,7 @@ import { Button } from "@repo/ui/button";
 import { useRouter } from "next/navigation";
 import { trpc } from "../lib/trpc";
 
-interface VerifyEmailProps {
+type VerifyEmailProps = {
   email?: string;
 }
 

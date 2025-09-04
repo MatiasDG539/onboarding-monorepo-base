@@ -2,7 +2,7 @@ import React from 'react';
 import { TextInput, Text, View, TextInputProps } from 'react-native';
 import { Control, Controller, FieldPath, FieldValues } from 'react-hook-form';
 
-interface TextInputFieldProps<T extends FieldValues> extends Omit<TextInputProps, 'onChangeText' | 'value'> {
+type TextInputFieldProps<T extends FieldValues> = Omit<TextInputProps, 'onChangeText' | 'value'> & {
     control: Control<T>;
     name: FieldPath<T>;
     placeholder?: string;

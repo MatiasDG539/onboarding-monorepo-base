@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export interface User {
+export type User = {
   id: string;
   firstName: string;
   lastName: string;

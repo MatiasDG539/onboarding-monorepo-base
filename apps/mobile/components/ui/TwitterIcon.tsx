@@ -1,7 +1,7 @@
 import React from 'react';
 import Svg, { G, Path } from 'react-native-svg';
 
-interface TwitterIconProps {
+type TwitterIconProps = {
   width?: number;
   height?: number;
   color?: string;
