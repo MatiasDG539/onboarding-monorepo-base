@@ -43,8 +43,7 @@ const SignInScreen = () => {
     };
 
     return (
-        <View className="flex-1 bg-gradient-to-b from-slate-50 to-white">
-            <View className="h-14" />
+        <View className="flex-1 bg-gradient-to-b from-slate-50 to-white pt-14">
             <View style={{ height: 16 }} />
             
             <View className="items-center mb-4">
