@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput } from 'react-native';
 import { useFormContext, Controller } from 'react-hook-form';
-import { SignUpData } from '../forms/schemas';
+import { SignUpData } from '../../lib/forms/schemas';
 
 export const Step2: React.FC = () => {
   const { control, formState } = useFormContext<SignUpData>();

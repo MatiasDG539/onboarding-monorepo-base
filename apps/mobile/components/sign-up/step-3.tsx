@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { useFormContext, Controller } from 'react-hook-form';
-import { SignUpData } from '../forms/schemas';
+import { SignUpData } from '../../lib/forms/schemas';
 
 interface Step3Props {
   showDatePicker: boolean;

@@ -18,7 +18,7 @@ import {
   SignUpStep2Schema,
   SignUpStep3Schema,
   type SignUpData,
-} from '@/components/forms/schemas';
+} from '@/lib/forms/schemas';
 import { trpc } from '../../lib/trpc';
 import { useRouter, useNavigation } from 'expo-router';
 import { Step1 } from '../../components/sign-up/step-1';

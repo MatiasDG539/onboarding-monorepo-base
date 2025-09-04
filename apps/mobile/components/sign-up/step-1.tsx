@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, ActivityIndicator } from 'react-native';
 import { useFormContext, Controller } from 'react-hook-form';
 import { trpc } from '../../lib/trpc';
-import { SignUpData } from '../forms/schemas';
+import { SignUpData } from '../../lib/forms/schemas';
 
 interface Step1Props {
   onEmailValidated?: (isValid: boolean) => void;

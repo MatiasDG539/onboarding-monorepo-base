@@ -5,7 +5,7 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
-import { SignInSchema, SignInData } from '../../components/forms/schemas';
+import { SignInSchema, SignInData } from '../../lib/forms/schemas';
 import TextInputField from '../../components/forms/text-input-field';
 import { trpc } from '../../lib/trpc';
 import { useAuthStore } from '../../lib/auth-store';
