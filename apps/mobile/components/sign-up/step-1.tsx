@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, ActivityIndicator } from 'react-native';
-import { useFormContext, Controller } from 'react-hook-form';
+import { View, Text, ActivityIndicator } from 'react-native';
+import { useFormContext } from 'react-hook-form';
 import { trpc } from '../../lib/trpc';
 import { SignUpData } from '../../lib/forms/schemas';
+import TextInputField from '../forms/text-input-field';
 
 type Step1Props = {
   onEmailValidated?: (isValid: boolean) => void;
 }
 
-export const Step1: React.FC<Step1Props> = ({ onEmailValidated }) => {
+export const Step1 = ({ onEmailValidated }: Step1Props) => {
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   
-  const { control, formState, watch } = useFormContext<SignUpData>();
+  const { control, watch } = useFormContext<SignUpData>();
   const utils = trpc.useUtils();
   
   const emailOrPhone = watch('emailOrPhone');
@@ -58,7 +59,6 @@ export const Step1: React.FC<Step1Props> = ({ onEmailValidated }) => {
     setEmailError(null);
     onEmailValidated?.(false);
     
-    // Only validate if it's a valid email format
     if (emailOrPhone && emailOrPhone.includes('@') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailOrPhone)) {
       const delayedValidation = setTimeout(() => {
         checkEmailAvailability(emailOrPhone);
@@ -74,45 +74,25 @@ export const Step1: React.FC<Step1Props> = ({ onEmailValidated }) => {
       <Text className="text-base text-gray-500 text-center mb-8">Let&apos;s start with your email</Text>
 
       <View className="w-full">
-        <Controller
+        <TextInputField
           control={control}
           name="emailOrPhone"
-          render={({ field: { onChange, value } }) => (
-            <View className="bg-white border border-gray-200 rounded-xl mb-3">
-              <TextInput
-                className="px-4 py-3 text-base text-gray-900"
-                style={{ minHeight: 48, fontSize: 16, color: '#1A202C' }}
-                placeholder="your@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                onChangeText={(text) => {
-                  onChange(text);
-                  if (emailError) {
-                    setEmailError(null);
-                  }
-                }}
-                value={value}
-                placeholderTextColor="#A0AEC0"
-                numberOfLines={1}
-                textAlignVertical="center"
-                allowFontScaling={true}
-                autoFocus={true}
-                onBlur={() => {
-                  if (value && value.includes('@')) {
-                    checkEmailAvailability(value);
-                  }
-                }}
-              />
-            </View>
-          )}
+          placeholder="your@email.com"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoFocus={true}
+          style={{ fontSize: 16, color: '#1A202C' }}
+          numberOfLines={1}
+          textAlignVertical="center"
+          allowFontScaling={true}
+          onBlur={() => {
+            const currentValue = watch('emailOrPhone');
+            if (currentValue && currentValue.includes('@')) {
+              checkEmailAvailability(currentValue);
+            }
+          }}
         />
-        
-        {formState.errors.emailOrPhone && (
-          <Text className="text-red-500 text-xs mb-2">
-            {formState.errors.emailOrPhone.message}
-          </Text>
-        )}
         
         {isCheckingEmail && (
           <View className="flex-row items-center mb-2">
