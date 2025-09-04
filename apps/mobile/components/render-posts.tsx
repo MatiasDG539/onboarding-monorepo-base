@@ -1,9 +1,8 @@
-import React, { FC } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   FlatList,
-  StyleSheet,
   ActivityIndicator,
   TouchableOpacity,
   Alert,
@@ -45,11 +44,11 @@ type Post = {
   };
 }
 
-const PostCard: FC<{ post: Post; onLike: (postId: string) => void; currentUserId?: string }> = ({ 
+const PostCard = ({ 
   post, 
   onLike, 
   currentUserId 
-}) => {
+}: { post: Post; onLike: (postId: string) => void; currentUserId?: string }) => {
   const formatDate = (dateString: string) => {
     const now = new Date();
     const date = new Date(dateString);
@@ -72,51 +71,56 @@ const PostCard: FC<{ post: Post; onLike: (postId: string) => void; currentUserId
   const hasLiked = currentUserId ? post.likes.some(like => like.authorId === currentUserId) : false;
 
   return (
-    <View style={styles.postCard}>
-      <View style={styles.postHeader}>
-        <View style={[styles.avatar, { backgroundColor: getAvatarColor(post.author.username) }]}>
-          <Text style={styles.avatarText}>
+    <View className="bg-white px-4 py-3">
+      <View className="flex-row items-start mb-2">
+        <View 
+          className="w-10 h-10 rounded-full justify-center items-center mr-3"
+          style={{ backgroundColor: getAvatarColor(post.author.username) }}
+        >
+          <Text className="text-white font-bold text-sm">
             {post.author.firstName[0]}{post.author.lastName[0]}
           </Text>
         </View>
-        <View style={styles.userInfo}>
-          <View style={styles.nameRow}>
-            <Text style={styles.userName}>
+        <View className="flex-1">
+          <View className="flex-row items-center flex-wrap">
+            <Text className="font-bold text-base text-black mr-1">
               {post.author.firstName} {post.author.lastName}
             </Text>
-            <Text style={styles.username}>@{post.author.username}</Text>
-            <Text style={styles.dateSeparator}>·</Text>
-            <Text style={styles.date}>{formatDate(post.createdAt)}</Text>
+            <Text className="text-gray-500 text-base mr-1">@{post.author.username}</Text>
+            <Text className="text-gray-500 text-base mr-1">·</Text>
+            <Text className="text-gray-500 text-base">{formatDate(post.createdAt)}</Text>
           </View>
         </View>
       </View>
 
-      <Text style={styles.postContent}>{post.content}</Text>
+      <Text className="text-base leading-5 text-black mb-3 ml-13">
+        {post.content}
+      </Text>
 
-      <View style={styles.postActions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>💬</Text>
-          <Text style={styles.actionCount}>{post._count.comments}</Text>
+      <View className="flex-row justify-between ml-13 mr-20 mt-2">
+        <TouchableOpacity className="flex-row items-center p-2 rounded-full min-w-12">
+          <Text className="text-lg mr-1">💬</Text>
+          <Text className="text-xs text-gray-500 font-normal">{post._count.comments}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.actionButton}
+          className="flex-row items-center p-2 rounded-full min-w-12"
           onPress={() => onLike(post.id)}
         >
-          <Text style={[styles.actionIcon, hasLiked && styles.likedIcon]}>
+          <Text className={`text-lg mr-1 ${hasLiked ? 'text-pink-500' : ''}`}>
             {hasLiked ? '❤️' : '🤍'}
           </Text>
-          <Text style={[styles.actionCount, hasLiked && styles.likedCount]}>
+          <Text className={`text-xs font-normal ${hasLiked ? 'text-pink-500' : 'text-gray-500'}`}>
             {post._count.likes}
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>🔄</Text>
+        <TouchableOpacity className="flex-row items-center p-2 rounded-full min-w-12">
+          <Text className="text-lg mr-1">🔄</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionIcon}>📤</Text>
+        <TouchableOpacity className="flex-row items-center p-2 rounded-full min-w-12">
+          <Text className="text-lg mr-1">📤</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -132,7 +136,7 @@ const getAvatarColor = (username: string) => {
   return colors[Math.abs(hash) % colors.length];
 };
 
-const RenderPosts: React.FC = () => {
+const RenderPosts = () => {
   const {
     data: feedData,
     isLoading,
@@ -158,13 +162,13 @@ const RenderPosts: React.FC = () => {
       refetch();
     },
     onError: (error) => {
-    Alert.alert('Error', 'Could not process the like. Please try again.');
+      Alert.alert('Error', 'Could not process the like. Please try again.');
     },
   });
 
   const handleLike = (postId: string) => {
     if (!currentUserId) {
-    Alert.alert('Error', 'Could not identify the user');
+      Alert.alert('Error', 'Could not identify the user');
       return;
     }
     
@@ -187,9 +191,9 @@ const RenderPosts: React.FC = () => {
   const renderFooter = () => {
     if (isFetchingNextPage) {
       return (
-        <View style={styles.footer}>
+        <View className="flex-row justify-center items-center p-5">
           <ActivityIndicator size="small" color="#1DA1F2" />
-          <Text style={styles.footerText}>Loading more posts...</Text>
+          <Text className="ml-2 text-sm text-gray-500">Loading more posts...</Text>
         </View>
       );
     }
@@ -197,32 +201,40 @@ const RenderPosts: React.FC = () => {
   };
 
   const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>No posts available</Text>
-      <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-        <Text style={styles.retryButtonText}>Try again</Text>
+    <View className="flex-1 justify-center items-center p-5">
+      <Text className="text-base text-gray-500 text-center mb-5">No posts available</Text>
+      <TouchableOpacity 
+        className="bg-blue-500 px-5 py-2 rounded-full" 
+        onPress={() => refetch()}
+      >
+        <Text className="text-white font-bold text-base">Try again</Text>
       </TouchableOpacity>
     </View>
   );
 
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View className="flex-1 justify-center items-center bg-white">
         <ActivityIndicator size="large" color="#1DA1F2" />
-        <Text style={styles.loadingText}>Loading posts...</Text>
+        <Text className="mt-2 text-base text-gray-500">Loading posts...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-    <View style={styles.errorContainer}>
-      <Text style={styles.errorText}>Error loading posts</Text>
-      <Text style={styles.errorDescription}>{error.message}</Text>
-      <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-        <Text style={styles.retryButtonText}>Try again</Text>
-      </TouchableOpacity>
-    </View>
+      <View className="flex-1 justify-center items-center p-5 bg-white">
+        <Text className="text-lg font-bold text-pink-500 text-center mb-2">
+          Error loading posts
+        </Text>
+        <Text className="text-sm text-gray-500 text-center mb-5">{error.message}</Text>
+        <TouchableOpacity 
+          className="bg-blue-500 px-5 py-2 rounded-full" 
+          onPress={() => refetch()}
+        >
+          <Text className="text-white font-bold text-base">Try again</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -243,174 +255,10 @@ const RenderPosts: React.FC = () => {
       ListFooterComponent={renderFooter}
       ListEmptyComponent={renderEmpty}
       showsVerticalScrollIndicator={false}
-      style={styles.container}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      className="flex-1 bg-white"
+      ItemSeparatorComponent={() => <View className="h-px bg-gray-200" />}
     />
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#E1E8ED',
-    marginHorizontal: 0,
-  },
-  postCard: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  postHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  userName: {
-    fontWeight: 'bold',
-    fontSize: 15,
-    color: '#14171A',
-    marginRight: 4,
-  },
-  username: {
-    color: '#657786',
-    fontSize: 15,
-    marginRight: 4,
-  },
-  dateSeparator: {
-    color: '#657786',
-    fontSize: 15,
-    marginRight: 4,
-  },
-  date: {
-    color: '#657786',
-    fontSize: 15,
-  },
-  postContent: {
-    fontSize: 15,
-    lineHeight: 20,
-    color: '#14171A',
-    marginBottom: 12,
-    marginLeft: 52,
-  },
-  postActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginLeft: 52,
-    marginRight: 80,
-    marginTop: 8,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    borderRadius: 20,
-    minWidth: 48,
-  },
-  actionIcon: {
-    fontSize: 18,
-    marginRight: 4,
-  },
-  actionCount: {
-    fontSize: 13,
-    color: '#657786',
-    fontWeight: '400',
-  },
-  likedIcon: {
-    color: '#F91880',
-  },
-  likedCount: {
-    color: '#F91880',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#657786',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-  },
-  errorText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#F91880',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  errorDescription: {
-    fontSize: 14,
-    color: '#657786',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#657786',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  retryButton: {
-    backgroundColor: '#1DA1F2',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  footerText: {
-    marginLeft: 10,
-    fontSize: 14,
-    color: '#657786',
-  },
-});
 
 export default RenderPosts;
