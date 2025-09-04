@@ -15,7 +15,18 @@ const SignInScreen = () => {
     const navigation = useNavigation();
     const { login } = useAuthStore();
 
-    const loginMutation = trpc.auth.login.useMutation();
+    const loginMutation = trpc.auth.login.useMutation({
+        onSuccess: (result) => {
+            if (result.user) {
+                login(result.user);
+                router.push('/home-screen');
+            }
+        },
+        onError: (error) => {
+            console.error('Login error:', error);
+            Alert.alert("Error", error.message || "Login failed. Please try again.");
+        },
+    });
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -28,18 +39,8 @@ const SignInScreen = () => {
         mode: 'onTouched',
     });
 
-    const onSubmit: SubmitHandler<SignInData> = async (data) => {
-        try {
-            const result = await loginMutation.mutateAsync(data);
-            
-            if (result.user) {
-                login(result.user);
-                router.push('/home-screen');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            Alert.alert("Error", error instanceof Error ? error.message : "Login failed. Please try again.");
-        }
+    const onSubmit: SubmitHandler<SignInData> = (data) => {
+        loginMutation.mutate(data);
     };
 
     return (
