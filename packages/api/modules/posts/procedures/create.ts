@@ -11,10 +11,7 @@ export const createPostRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         const post = await ctx.prisma.post.create({
-          data: {
-            content: input.content,
-            authorId: input.authorId,
-          },
+          data: input,
           include: {
             author: {
               select: {

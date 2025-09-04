@@ -24,10 +24,7 @@ export const toggleLikeRouter = router({
           return { liked: false };
         } else {
           await ctx.prisma.like.create({
-            data: {
-              postId: input.postId,
-              authorId: input.authorId,
-            }
+            data: input
           });
           return { liked: true };
         }

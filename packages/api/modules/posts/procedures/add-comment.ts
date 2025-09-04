@@ -12,11 +12,7 @@ export const addCommentRouter = router({
     .mutation(async ({ input, ctx }) => {
       try {
         const comment = await ctx.prisma.comment.create({
-          data: {
-            content: input.content,
-            postId: input.postId,
-            authorId: input.authorId,
-          },
+          data: input,
           include: {
             author: {
               select: {
