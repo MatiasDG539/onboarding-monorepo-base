@@ -45,14 +45,17 @@ const SignInScreen = () => {
         <View className="flex-1 bg-gradient-to-b from-slate-50 to-white">
             <View className="h-14" />
             <View style={{ height: 16 }} />
+            
             <View className="items-center mb-4">
                 <TwitterIcon width={72} height={72} />
             </View>
+            
             <View className="flex-1 justify-center items-center px-8">
                 <View className="items-center mb-10">
                     <Text className="text-3xl font-bold text-gray-900 mb-2">Sign In</Text>
                     <Text className="text-base text-gray-500 text-center">Welcome back! Please sign in to continue.</Text>
                 </View>
+                
                 <View className="w-full max-w-sm mb-8">
                     <Controller
                         control={control}
@@ -73,6 +76,7 @@ const SignInScreen = () => {
                     {errors.emailOrPhone && (
                         <Text className="text-red-500 text-xs mb-2">{errors.emailOrPhone.message}</Text>
                     )}
+                    
                     <Controller
                         control={control}
                         name="password"
@@ -92,6 +96,7 @@ const SignInScreen = () => {
                     {errors.password && (
                         <Text className="text-red-500 text-xs mb-2">{errors.password.message}</Text>
                     )}
+                    
                     <TouchableOpacity
                         className="bg-[#00AAEC] py-4 px-8 rounded-full shadow-lg mt-2"
                         onPress={handleSubmit(onSubmit)}
@@ -105,6 +110,7 @@ const SignInScreen = () => {
                         )}
                     </TouchableOpacity>
                 </View>
+                
                 <TouchableOpacity
                     className="mb-8"
                     onPress={() => router.push('/sign-up')}
@@ -116,6 +122,7 @@ const SignInScreen = () => {
                     </Text>
                 </TouchableOpacity>
             </View>
+            
             <View className="pb-8 px-8">
                 <Text className="text-center text-gray-400 text-sm">
                     © 2025 TwitterClone.
