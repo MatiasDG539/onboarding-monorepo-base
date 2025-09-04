@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  StyleSheet,
-  useWindowDimensions,
   ScrollView,
   Animated,
 } from 'react-native';
@@ -18,10 +16,6 @@ import Svg, { Path } from 'react-native-svg';
 const VerifyEmailScreen = () => {
   const router = useRouter();
   const { email = "user@example.com" } = useLocalSearchParams<{ email: string }>();
-  const { width, height } = useWindowDimensions();
-  const isSmallDevice = width < 375;
-  const isLargeDevice = width > 414;
-  const isLandscape = width > height;
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [isComplete, setIsComplete] = useState(false);
@@ -114,7 +108,7 @@ const VerifyEmailScreen = () => {
         code: codeToVerify,
       });
 
-      router.replace('/(tabs)');
+      router.replace('/home-screen');
     } catch (err) {
       console.error('Verification error:', err);
       setError(err instanceof Error ? err.message : "Invalid code. Please check and try again.");
@@ -145,35 +139,33 @@ const VerifyEmailScreen = () => {
     }
   };
 
-  const styles = createMobileStyles(isSmallDevice, isLargeDevice, isLandscape, width);
-
   return (
     <KeyboardAvoidingView 
-      style={styles.container}
+      className="flex-1 bg-slate-50"
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+        className="flex-grow min-h-full"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
         <Animated.View 
+          className="flex-1 px-6 pt-16 pb-8"
           style={[
-            styles.content,
             { opacity: fadeAnimation }
           ]}
         >
           {isComplete && (
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: '100%' }]} />
+            <View className="mb-10">
+              <View className="h-1 bg-gray-200 rounded-sm overflow-hidden">
+                <View className="h-full bg-[#00AAEC] rounded-sm" style={{ width: '100%' }} />
               </View>
             </View>
           )}
 
-          <View style={styles.headerSection}>
-            <View style={styles.iconContainer}>
-              <View style={styles.iconCircle}>
+          <View className="items-center mb-10">
+            <View className="mb-5">
+              <View className="w-18 h-18 rounded-full bg-blue-50 justify-center items-center border-2 border-blue-200">
                 <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
                   <Path 
                     d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" 
@@ -191,32 +183,29 @@ const VerifyEmailScreen = () => {
               </View>
             </View>
             
-            <Text style={styles.title}>Check your {isEmail ? 'email' : 'phone'}</Text>
-            <Text style={styles.subtitle}>
+            <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">Check your {isEmail ? 'email' : 'phone'}</Text>
+            <Text className="text-base text-gray-500 text-center mb-1 leading-6">
               We&apos;ve sent a 6-digit verification code to
             </Text>
-            <Text style={styles.contactText}>{maskedContact}</Text>
+            <Text className="text-lg font-semibold text-[#00AAEC] text-center">{maskedContact}</Text>
           </View>
 
           <Animated.View 
+            className="mb-10"
             style={[
-              styles.codeSection,
               { transform: [{ translateX: shakeAnimation }] }
             ]}
           >
-            <Text style={styles.codeLabel}>Enter verification code</Text>
+            <Text className="text-base font-semibold text-gray-700 text-center mb-5">Enter verification code</Text>
             
-            <View style={styles.codeContainer}>
+            <View className="flex-row justify-center mb-4" style={{ gap: 12 }}>
               {code.map((digit, index) => (
-                <View key={index} style={styles.inputWrapper}>
+                <View key={index} className="relative">
                   <TextInput
                     ref={(ref) => { inputRefs.current[index] = ref; }}
-                    style={[
-                      styles.codeInput,
-                      digit ? styles.codeInputFilled : styles.codeInputEmpty,
-                      error ? styles.codeInputError : null,
-                      isLoading ? styles.codeInputLoading : null
-                    ]}
+                    className={`w-13 h-13 border-2 rounded-xl text-center text-2xl font-bold text-gray-900 ${
+                      digit ? 'border-[#00AAEC] bg-white shadow-sm' : 'border-gray-300 bg-gray-50'
+                    } ${error ? 'border-red-500 bg-red-50' : ''} ${isLoading ? 'opacity-60' : ''}`}
                     value={digit}
                     onChangeText={(value) => handleInputChange(index, value)}
                     onKeyPress={({ nativeEvent }) => handleKeyPress(index, nativeEvent.key)}
@@ -236,47 +225,47 @@ const VerifyEmailScreen = () => {
             </View>
 
             {error ? (
-              <View style={styles.errorContainer}>
-                <View style={styles.errorContent}>
-                  <Svg width={16} height={16} viewBox="0 0 20 20" fill="none" style={styles.errorIcon}>
+              <View className="items-center min-h-6 bg-red-50 rounded-lg border border-red-200 px-3 py-2 mt-2">
+                <View className="flex-row items-center justify-center" style={{ gap: 8 }}>
+                  <Svg width={16} height={16} viewBox="0 0 20 20" fill="none" className="flex-shrink-0">
                     <Path 
                       d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" 
                       fill="#dc2626"
                     />
                   </Svg>
-                  <Text style={styles.errorText}>{error}</Text>
+                  <Text className="text-sm text-red-600 text-center font-medium flex-1">{error}</Text>
                 </View>
               </View>
             ) : (
-              <View style={styles.hintContainer}>
-                <Text style={styles.hintText}>
+              <View className="items-center min-h-6">
+                <Text className="text-sm text-gray-500 text-center">
                   {isComplete ? '✓ Code complete' : 'Enter all 6 digits'}
                 </Text>
               </View>
             )}
           </Animated.View>
 
-          <View style={styles.actionSection}>
+          <View className="mb-8" style={{ gap: 16 }}>
           
-            <View style={styles.resendContainer}>
-              <Text style={styles.resendQuestion}>
+            <View className="items-center" style={{ gap: 12 }}>
+              <Text className="text-sm text-gray-500 text-center">
                 Didn&apos;t receive the code?
               </Text>
               {canResend ? (
                 <TouchableOpacity 
-                  style={styles.resendButton} 
+                  className="py-2.5 px-4 rounded-lg border border-[#00AAEC] bg-transparent"
                   onPress={handleResend}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.resendButtonText}>Resend Code</Text>
+                  <Text className="text-base text-[#00AAEC] font-semibold">Resend Code</Text>
                 </TouchableOpacity>
               ) : (
-                <View style={styles.timerContainer}>
-                  <Text style={styles.timerText}>
+                <View className="items-center py-2" style={{ gap: 8 }}>
+                  <Text className="text-sm text-gray-500 text-center">
                     Resend available in
                   </Text>
-                  <View style={styles.timerBadge}>
-                    <Text style={styles.timerNumber}>{resendTimer}s</Text>
+                  <View className="bg-gray-100 px-3 py-1.5 rounded-full border border-gray-300">
+                    <Text className="text-base font-bold text-gray-700">{resendTimer}s</Text>
                   </View>
                 </View>
               )}
@@ -284,28 +273,28 @@ const VerifyEmailScreen = () => {
 
             {isComplete && !isLoading && (
               <TouchableOpacity
-                style={styles.verifyButton}
+                className="bg-[#00AAEC] py-4 rounded-xl items-center shadow-lg"
                 onPress={() => handleVerify()}
                 activeOpacity={0.8}
               >
-                <Text style={styles.verifyButtonText}>Verify Code</Text>
+                <Text className="text-white text-lg font-bold">Verify Code</Text>
               </TouchableOpacity>
             )}
 
             {isLoading && (
-              <View style={styles.loadingContainer}>
-                <Text style={styles.loadingText}>Verifying...</Text>
+              <View className="items-center py-4">
+                <Text className="text-base text-gray-500 italic">Verifying...</Text>
               </View>
             )}
           </View>
 
           {/* Footer */}
           <TouchableOpacity 
-            style={styles.backButton} 
+            className="items-center py-3"
             onPress={() => router.push('/sign-up')}
             activeOpacity={0.7}
           >
-            <Text style={styles.backButtonText}>← Change email address</Text>
+            <Text className="text-sm text-gray-500 text-center">← Change email address</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -314,270 +303,3 @@ const VerifyEmailScreen = () => {
 }
 
 export default VerifyEmailScreen;
-
-const createMobileStyles = (isSmallDevice: boolean, isLargeDevice: boolean, isLandscape: boolean, width: number) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    minHeight: '100%',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: isSmallDevice ? 20 : isLargeDevice ? 32 : 24,
-    paddingTop: isLandscape ? 20 : (isSmallDevice ? 50 : 70),
-    paddingBottom: 30,
-  },
-  
-  progressContainer: {
-    marginBottom: isLandscape ? 20 : (isSmallDevice ? 30 : 40),
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#00AAEC',
-    borderRadius: 2,
-  },
-  topTimerContainer: {
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  topTimerText: {
-    fontSize: isSmallDevice ? 11 : 12,
-    color: '#9ca3af',
-    fontWeight: '500',
-  },
-
-  headerSection: {
-    alignItems: 'center',
-    marginBottom: isLandscape ? 24 : (isSmallDevice ? 32 : 40),
-  },
-  iconContainer: {
-    marginBottom: isSmallDevice ? 16 : 20,
-  },
-  iconCircle: {
-    width: isSmallDevice ? 60 : 72,
-    height: isSmallDevice ? 60 : 72,
-    borderRadius: isSmallDevice ? 30 : 36,
-    backgroundColor: '#f0f9ff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#bfdbfe',
-  },
-  title: {
-    fontSize: isSmallDevice ? 24 : isLargeDevice ? 32 : 28,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: isSmallDevice ? 14 : 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 4,
-    lineHeight: isSmallDevice ? 20 : 22,
-  },
-  contactText: {
-    fontSize: isSmallDevice ? 16 : 18,
-    fontWeight: '600',
-    color: '#00AAEC',
-    textAlign: 'center',
-  },
-
-  codeSection: {
-    marginBottom: isLandscape ? 24 : (isSmallDevice ? 32 : 40),
-  },
-  codeLabel: {
-    fontSize: isSmallDevice ? 14 : 16,
-    fontWeight: '600',
-    color: '#374151',
-    textAlign: 'center',
-    marginBottom: isSmallDevice ? 16 : 20,
-  },
-  codeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: isSmallDevice ? 8 : isLargeDevice ? 16 : 12,
-    marginBottom: 16,
-  },
-  inputWrapper: {
-    position: 'relative',
-  },
-  codeInput: {
-    width: isSmallDevice ? 44 : isLargeDevice ? 60 : 52,
-    height: isSmallDevice ? 44 : isLargeDevice ? 60 : 52,
-    borderWidth: 2,
-    borderRadius: 12,
-    textAlign: 'center',
-    fontSize: isSmallDevice ? 20 : isLargeDevice ? 28 : 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  codeInputEmpty: {
-    borderColor: '#d1d5db',
-    backgroundColor: '#f9fafb',
-  },
-  codeInputFilled: {
-    borderColor: '#00AAEC',
-    backgroundColor: 'white',
-    shadowColor: '#00AAEC',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  codeInputError: {
-    borderColor: '#ef4444',
-    backgroundColor: '#fef2f2',
-  },
-  codeInputLoading: {
-    opacity: 0.6,
-  },
-  checkmark: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: '#10b981',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkmarkText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-
-  hintContainer: {
-    alignItems: 'center',
-    minHeight: 24,
-  },
-  hintText: {
-    fontSize: isSmallDevice ? 12 : 14,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  errorContainer: {
-    alignItems: 'center',
-    minHeight: 24,
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginTop: 8,
-  },
-  errorContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  errorIcon: {
-    flexShrink: 0,
-  },
-  errorText: {
-    fontSize: isSmallDevice ? 12 : 14,
-    color: '#dc2626',
-    textAlign: 'center',
-    fontWeight: '500',
-    flex: 1,
-  },
-
-  actionSection: {
-    gap: 16,
-    marginBottom: isLandscape ? 20 : (isSmallDevice ? 24 : 32),
-  },
-  resendContainer: {
-    alignItems: 'center',
-    gap: 12,
-  },
-  resendQuestion: {
-    fontSize: isSmallDevice ? 13 : 14,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  resendButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#00AAEC',
-    backgroundColor: 'transparent',
-  },
-  resendButtonText: {
-    fontSize: isSmallDevice ? 14 : 16,
-    color: '#00AAEC',
-    fontWeight: '600',
-  },
-  timerContainer: {
-    alignItems: 'center',
-    paddingVertical: 8,
-    gap: 8,
-  },
-  timerText: {
-    fontSize: isSmallDevice ? 12 : 14,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  timerBadge: {
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  timerNumber: {
-    fontSize: isSmallDevice ? 14 : 16,
-    fontWeight: 'bold',
-    color: '#374151',
-  },
-  verifyButton: {
-    backgroundColor: '#00AAEC',
-    paddingVertical: isSmallDevice ? 14 : 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#00AAEC',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  verifyButtonText: {
-    color: 'white',
-    fontSize: isSmallDevice ? 16 : 18,
-    fontWeight: 'bold',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  loadingText: {
-    fontSize: isSmallDevice ? 14 : 16,
-    color: '#6b7280',
-    fontStyle: 'italic',
-  },
-
-  backButton: {
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  backButtonText: {
-    fontSize: isSmallDevice ? 13 : 14,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-});
