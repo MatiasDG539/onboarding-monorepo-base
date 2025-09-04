@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { useFormContext, Controller } from 'react-hook-form';
+import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { useFormContext } from 'react-hook-form';
 import { SignUpData } from '../../lib/forms/schemas';
+import TextInputField from '../forms/text-input-field';
 
 type Step3Props = {
   showDatePicker: boolean;
@@ -16,7 +17,7 @@ export const Step3: React.FC<Step3Props> = ({
   selectedDate, 
   onDateSelect 
 }) => {
-  const { control, formState, watch } = useFormContext<SignUpData>();
+  const { control, watch, formState: { errors } } = useFormContext<SignUpData>();
 
   const formatDateForDisplay = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -98,6 +99,7 @@ export const Step3: React.FC<Step3Props> = ({
             }}
             pointerEvents="none"
           />
+          
           <ScrollView
             ref={scrollViewRef}
             showsVerticalScrollIndicator={false}
@@ -130,7 +132,9 @@ export const Step3: React.FC<Step3Props> = ({
               <TouchableOpacity onPress={() => setShowDatePicker(false)}>
                 <Text className="text-gray-500 text-lg">Cancel</Text>
               </TouchableOpacity>
+              
               <Text className="text-lg font-semibold text-gray-900">Select Birth Date</Text>
+              
               <TouchableOpacity onPress={() => onDateSelect(tempDate)}>
                 <Text className="text-[#00AAEC] text-lg font-semibold">Done</Text>
               </TouchableOpacity>
@@ -148,6 +152,7 @@ export const Step3: React.FC<Step3Props> = ({
                     }}
                   />
                 </View>
+                
                 <View className="flex-1">
                   <WheelPicker
                     data={days}
@@ -157,6 +162,7 @@ export const Step3: React.FC<Step3Props> = ({
                     }}
                   />
                 </View>
+                
                 <View className="flex-1">
                   <WheelPicker
                     data={years}
@@ -184,77 +190,39 @@ export const Step3: React.FC<Step3Props> = ({
 
         <View className="w-full">
           <View className="flex-row gap-3 mb-3">
-            <Controller
-              control={control}
-              name="firstName"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
-                  placeholder="First name"
-                  autoCapitalize="words"
-                  onChangeText={onChange}
-                  value={value}
-                  placeholderTextColor="#A0AEC0"
-                />
-              )}
-            />
-            <Controller
-              control={control}
-              name="lastName"
-              render={({ field: { onChange, value } }) => (
-                <TextInput
-                  className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
-                  placeholder="Last name"
-                  autoCapitalize="words"
-                  onChangeText={onChange}
-                  value={value}
-                  placeholderTextColor="#A0AEC0"
-                />
-              )}
-            />
+            <View className="flex-1">
+              <TextInputField
+                control={control}
+                name="firstName"
+                placeholder="First name"
+                autoCapitalize="words"
+              />
+            </View>
+            
+            <View className="flex-1">
+              <TextInputField
+                control={control}
+                name="lastName"
+                placeholder="Last name"
+                autoCapitalize="words"
+              />
+            </View>
           </View>
-          {(formState.errors.firstName || formState.errors.lastName) && (
-            <Text className="text-red-500 text-xs mb-2">
-              {formState.errors.firstName?.message || formState.errors.lastName?.message}
-            </Text>
-          )}
 
-          <Controller
+          <TextInputField
             control={control}
             name="username"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
-                placeholder="@yourusername"
-                autoCapitalize="none"
-                autoCorrect={false}
-                onChangeText={onChange}
-                value={value}
-                placeholderTextColor="#A0AEC0"
-              />
-            )}
+            placeholder="@yourusername"
+            autoCapitalize="none"
+            autoCorrect={false}
           />
-          {formState.errors.username && (
-            <Text className="text-red-500 text-xs mb-2">{formState.errors.username.message}</Text>
-          )}
 
-          <Controller
+          <TextInputField
             control={control}
             name="phoneNumber"
-            render={({ field: { onChange, value } }) => (
-              <TextInput
-                className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
-                placeholder="+1 234 567 8900"
-                keyboardType="phone-pad"
-                onChangeText={onChange}
-                value={value}
-                placeholderTextColor="#A0AEC0"
-              />
-            )}
+            placeholder="+1 234 567 8900"
+            keyboardType="phone-pad"
           />
-          {formState.errors.phoneNumber && (
-            <Text className="text-red-500 text-xs mb-2">{formState.errors.phoneNumber.message}</Text>
-          )}
 
           <TouchableOpacity
             onPress={() => setShowDatePicker(true)}
@@ -265,8 +233,9 @@ export const Step3: React.FC<Step3Props> = ({
             </Text>
             <Text className="text-gray-400">📅</Text>
           </TouchableOpacity>
-          {formState.errors.birthdate && (
-            <Text className="text-red-500 text-xs mb-2">{formState.errors.birthdate.message}</Text>
+          
+          {errors.birthdate && (
+            <Text className="text-red-500 text-xs mb-2">{errors.birthdate.message}</Text>
           )}
         </View>
       </View>
