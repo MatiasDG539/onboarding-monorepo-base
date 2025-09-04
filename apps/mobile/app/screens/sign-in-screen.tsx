@@ -1,11 +1,12 @@
 import React, { useLayoutEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import TwitterIcon from '@/components/ui/TwitterIcon';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';
 import { useNavigation } from '@react-navigation/native';
 import { SignInSchema, SignInData } from '../../components/forms/schemas';
+import TextInputField from '../../components/forms/text-input-field';
 import { trpc } from '../../lib/trpc';
 import { useAuthStore } from '../../lib/auth-store';
 
@@ -57,45 +58,21 @@ const SignInScreen = () => {
                 </View>
                 
                 <View className="w-full max-w-sm mb-8">
-                    <Controller
+                    <TextInputField
                         control={control}
                         name="emailOrPhone"
-                        render={({ field: { onChange, value } }) => (
-                            <TextInput
-                                className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
-                                style={{ minHeight: 48, paddingVertical: 10 }}
-                                placeholder="Email or phone number"
-                                autoCapitalize="none"
-                                keyboardType="email-address"
-                                onChangeText={onChange}
-                                value={value}
-                                placeholderTextColor="#A0AEC0"
-                            />
-                        )}
+                        placeholder="Email or phone number"
+                        keyboardType="email-address"
+                        error={errors.emailOrPhone?.message}
                     />
-                    {errors.emailOrPhone && (
-                        <Text className="text-red-500 text-xs mb-2">{errors.emailOrPhone.message}</Text>
-                    )}
                     
-                    <Controller
+                    <TextInputField
                         control={control}
                         name="password"
-                        render={({ field: { onChange, value } }) => (
-                            <TextInput
-                                className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
-                                style={{ minHeight: 48, paddingVertical: 10 }}
-                                placeholder="Password"
-                                secureTextEntry
-                                autoCapitalize="none"
-                                onChangeText={onChange}
-                                value={value}
-                                placeholderTextColor="#A0AEC0"
-                            />
-                        )}
+                        placeholder="Password"
+                        secureTextEntry
+                        error={errors.password?.message}
                     />
-                    {errors.password && (
-                        <Text className="text-red-500 text-xs mb-2">{errors.password.message}</Text>
-                    )}
                     
                     <TouchableOpacity
                         className="bg-[#00AAEC] py-4 px-8 rounded-full shadow-lg mt-2"
