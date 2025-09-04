@@ -23,7 +23,7 @@ const SignInScreen = () => {
         });
     }, [navigation]);
     
-    const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignInData>({
+    const { control, handleSubmit, formState: { isSubmitting } } = useForm<SignInData>({
         resolver: zodResolver(SignInSchema),
         mode: 'onTouched',
     });
@@ -63,7 +63,6 @@ const SignInScreen = () => {
                         name="emailOrPhone"
                         placeholder="Email or phone number"
                         keyboardType="email-address"
-                        error={errors.emailOrPhone?.message}
                     />
                     
                     <TextInputField
@@ -71,7 +70,6 @@ const SignInScreen = () => {
                         name="password"
                         placeholder="Password"
                         secureTextEntry
-                        error={errors.password?.message}
                     />
                     
                     <TouchableOpacity

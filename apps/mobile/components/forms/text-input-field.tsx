@@ -6,7 +6,6 @@ interface TextInputFieldProps<T extends FieldValues> extends Omit<TextInputProps
     control: Control<T>;
     name: FieldPath<T>;
     placeholder?: string;
-    error?: string;
     secureTextEntry?: boolean;
     keyboardType?: TextInputProps['keyboardType'];
     autoCapitalize?: TextInputProps['autoCapitalize'];
@@ -16,7 +15,6 @@ const TextInputField = <T extends FieldValues>({
     control,
     name,
     placeholder,
-    error,
     secureTextEntry = false,
     keyboardType = 'default',
     autoCapitalize = 'none',
@@ -27,24 +25,26 @@ const TextInputField = <T extends FieldValues>({
             <Controller
                 control={control}
                 name={name}
-                render={({ field: { onChange, value } }) => (
-                    <TextInput
-                        className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
-                        style={{ minHeight: 48, paddingVertical: 10 }}
-                        placeholder={placeholder}
-                        autoCapitalize={autoCapitalize}
-                        keyboardType={keyboardType}
-                        secureTextEntry={secureTextEntry}
-                        onChangeText={onChange}
-                        value={value}
-                        placeholderTextColor="#A0AEC0"
-                        {...props}
-                    />
+                render={({ field: { onChange, value }, fieldState: { error } }) => (
+                    <>
+                        <TextInput
+                            className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+                            style={{ minHeight: 48, paddingVertical: 10 }}
+                            placeholder={placeholder}
+                            autoCapitalize={autoCapitalize}
+                            keyboardType={keyboardType}
+                            secureTextEntry={secureTextEntry}
+                            onChangeText={onChange}
+                            value={value}
+                            placeholderTextColor="#A0AEC0"
+                            {...props}
+                        />
+                        {error && (
+                            <Text className="text-red-500 text-xs mb-2">{error.message}</Text>
+                        )}
+                    </>
                 )}
             />
-            {error && (
-                <Text className="text-red-500 text-xs mb-2">{error}</Text>
-            )}
         </View>
     );
 };
