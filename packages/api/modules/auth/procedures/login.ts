@@ -1,10 +1,9 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
 
-export const loginRouter = router({
-  login: publicProcedure
+export const login = publicProcedure
     .input(z.object({
       emailOrPhone: z.string(),
       password: z.string(),
@@ -63,5 +62,4 @@ export const loginRouter = router({
           message: 'Login failed',
         });
       }
-    }),
-});
+    });

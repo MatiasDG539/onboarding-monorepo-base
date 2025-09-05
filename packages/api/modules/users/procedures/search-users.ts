@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 
-export const searchUsersRouter = router({
-  searchUsers: publicProcedure
+export const searchUsers = publicProcedure
     .input(z.object({
       query: z.string().min(1),
       limit: z.number().optional().default(10),
@@ -34,5 +33,4 @@ export const searchUsersRouter = router({
         console.error('Search users error:', error);
         return [];
       }
-    }),
-});
+    });

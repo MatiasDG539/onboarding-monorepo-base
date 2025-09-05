@@ -1,6 +1,6 @@
 
 import { z } from "zod";
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 import { TRPCError } from '@trpc/server';
 
 const verifyCodeInputSchema = z.object({
@@ -8,8 +8,7 @@ const verifyCodeInputSchema = z.object({
 	code: z.string(),
 });
 
-export const verifyCodeRouter = router({
-	verify: publicProcedure
+export const verifyCode = publicProcedure
 		.input(verifyCodeInputSchema)
 		.mutation(async ({ input, ctx }) => {
 			try {
@@ -50,4 +49,3 @@ export const verifyCodeRouter = router({
 				});
 			}
 		})
-});

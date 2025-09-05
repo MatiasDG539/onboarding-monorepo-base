@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 
-export const getFeedRouter = router({
-  getFeed: publicProcedure
+export const getFeed = publicProcedure
     .input(z.object({
       limit: z.number().optional().default(10),
       cursor: z.string().optional(),
@@ -62,5 +61,4 @@ export const getFeedRouter = router({
         console.error('Get feed error:', error);
         return { posts: [], nextCursor: undefined };
       }
-    }),
-});
+    });

@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 import { TRPCError } from '@trpc/server';
 
-export const toggleLikeRouter = router({
-  toggleLike: publicProcedure
+export const toggleLike = publicProcedure
     .input(z.object({
       postId: z.string(),
       authorId: z.string(),
@@ -35,5 +34,4 @@ export const toggleLikeRouter = router({
           message: 'Failed to toggle like',
         });
       }
-    }),
-});
+    });

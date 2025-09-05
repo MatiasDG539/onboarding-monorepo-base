@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 import { TRPCError } from '@trpc/server';
 
-export const updateProfileRouter = router({
-  updateProfile: publicProcedure
+export const updateProfile = publicProcedure
     .input(z.object({
       userId: z.string(),
       firstName: z.string().optional(),
@@ -36,5 +35,4 @@ export const updateProfileRouter = router({
           message: 'Failed to update profile',
         });
       }
-    }),
-});
+    });

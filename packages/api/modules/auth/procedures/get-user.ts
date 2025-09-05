@@ -1,8 +1,7 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 
-export const getUserRouter = router({
-  getUser: publicProcedure
+export const getUser = publicProcedure
     .input(z.string())
     .query(async ({ input, ctx }) => {
       try {
@@ -29,5 +28,4 @@ export const getUserRouter = router({
         console.error('Get user error:', error);
         return null;
       }
-    }),
-});
+    });

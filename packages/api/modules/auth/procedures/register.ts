@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
 
@@ -13,8 +13,7 @@ const userDataSchema = z.object({
   birthdate: z.string().transform(str => new Date(str)),
 });
 
-export const registerRouter = router({
-  register: publicProcedure
+export const register = publicProcedure
     .input(userDataSchema)
     .mutation(async ({ input, ctx }) => {
       try {
@@ -73,5 +72,4 @@ export const registerRouter = router({
           message: 'Failed to create user',
         });
       }
-    }),
-});
+    });

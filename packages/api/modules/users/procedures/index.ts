@@ -1,11 +1,3 @@
-import { getProfileRouter } from './get-profile';
-import { updateProfileRouter } from './update-profile';
-import { searchUsersRouter } from './search-users';
-
-import { router } from '../../../trpc/base';
-
-export const usersRouter = router({
-  ...getProfileRouter._def.record,
-  ...updateProfileRouter._def.record,
-  ...searchUsersRouter._def.record,
-});
+export { getProfile } from './get-profile';
+export { updateProfile } from './update-profile';
+export { searchUsers } from './search-users';

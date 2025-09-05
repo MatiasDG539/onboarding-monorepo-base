@@ -1,13 +1,5 @@
-import { createPostRouter } from './create';
-import { getFeedRouter } from './get-feed';
-import { toggleLikeRouter } from './toggle-like';
-import { addCommentRouter } from './add-comment';
+export { create } from './create';
+export { getFeed } from './get-feed';
+export { toggleLike } from './toggle-like';
+export { addComment } from './add-comment';
 
-import { router } from '../../../trpc/base';
-
-export const postsRouter = router({
-  ...createPostRouter._def.record,
-  ...getFeedRouter._def.record,
-  ...toggleLikeRouter._def.record,
-  ...addCommentRouter._def.record,
-});

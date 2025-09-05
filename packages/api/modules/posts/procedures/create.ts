@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
+import { publicProcedure } from '../../../trpc/base';
 import { TRPCError } from '@trpc/server';
 
-export const createPostRouter = router({
-  create: publicProcedure
+export const create = publicProcedure
     .input(z.object({
       content: z.string().min(1),
       authorId: z.string(),
@@ -47,5 +46,4 @@ export const createPostRouter = router({
           message: 'Failed to create post',
         });
       }
-    }),
-});
+    });
