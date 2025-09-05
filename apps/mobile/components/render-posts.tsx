@@ -8,7 +8,11 @@ import {
   Alert,
   RefreshControl,
 } from 'react-native';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import { trpc } from '../lib/trpc';
+
+dayjs.extend(relativeTime);
 
 type Author = {
   id: string;
@@ -50,22 +54,7 @@ const PostCard = ({
   currentUserId 
 }: { post: Post; onLike: (postId: string) => void; currentUserId?: string }) => {
   const formatDate = (dateString: string) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-    const diffMinutes = Math.floor(diffTime / (1000 * 60));
-
-    if (diffDays > 0) {
-      return `${diffDays}d`;
-    } else if (diffHours > 0) {
-      return `${diffHours}h`;
-    } else if (diffMinutes > 0) {
-      return `${diffMinutes}m`;
-    } else {
-      return 'now';
-    }
+    return dayjs(dateString).fromNow();
   };
 
   const hasLiked = currentUserId ? post.likes.some(like => like.authorId === currentUserId) : false;
