@@ -110,7 +110,6 @@ const VerifyEmailScreen = () => {
 
       router.replace('/home-screen');
     } catch (err) {
-      console.error('Verification error:', err);
       setError(err instanceof Error ? err.message : "Invalid code. Please check and try again.");
       setCode(['', '', '', '', '', '']);
       triggerShakeAnimation();
@@ -134,7 +133,6 @@ const VerifyEmailScreen = () => {
       setError('');
       inputRefs.current[0]?.focus();
     } catch (err) {
-      console.error('Resend error:', err);
       setError(err instanceof Error ? err.message : "Failed to resend code. Please try again.");
     }
   };
@@ -165,22 +163,20 @@ const VerifyEmailScreen = () => {
 
           <View className="items-center mb-10">
             <View className="mb-5">
-              <View className="w-18 h-18 rounded-full bg-blue-50 justify-center items-center border-2 border-blue-200">
-                <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-                  <Path 
-                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" 
-                    stroke="#00AAEC" 
-                    strokeWidth="2" 
-                    fill="none"
-                  />
-                  <Path 
-                    d="m22 6-10 7L2 6" 
-                    stroke="#00AAEC" 
-                    strokeWidth="2" 
-                    fill="none"
-                  />
-                </Svg>
-              </View>
+              <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
+                <Path 
+                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" 
+                  stroke="#00AAEC" 
+                  strokeWidth="2" 
+                  fill="none"
+                />
+                <Path 
+                  d="m22 6-10 7L2 6" 
+                  stroke="#00AAEC" 
+                  strokeWidth="2" 
+                  fill="none"
+                />
+              </Svg>
             </View>
             
             <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">Check your {isEmail ? 'email' : 'phone'}</Text>
@@ -198,13 +194,13 @@ const VerifyEmailScreen = () => {
           >
             <Text className="text-base font-semibold text-gray-700 text-center mb-5">Enter verification code</Text>
             
-            <View className="flex-row justify-center mb-4" style={{ gap: 12 }}>
+            <View className="flex-row justify-center mb-4" style={{ gap: 14 }}>
               {code.map((digit, index) => (
                 <View key={index} className="relative">
                   <TextInput
                     ref={(ref) => { inputRefs.current[index] = ref; }}
-                    className={`w-13 h-13 border-2 rounded-xl text-center text-2xl font-bold text-gray-900 ${
-                      digit ? 'border-[#00AAEC] bg-white shadow-sm' : 'border-gray-300 bg-gray-50'
+                    className={`w-14 h-14 border-2 rounded-xl text-center text-2xl font-bold text-gray-900 ${
+                      digit ? 'border-[#00AAEC] bg-white shadow-lg' : 'border-gray-300 bg-gray-50'
                     } ${error ? 'border-red-500 bg-red-50' : ''} ${isLoading ? 'opacity-60' : ''}`}
                     value={digit}
                     onChangeText={(value) => handleInputChange(index, value)}

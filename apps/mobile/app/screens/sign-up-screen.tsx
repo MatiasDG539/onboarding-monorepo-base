@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,8 @@ import TwitterIcon from '@/components/ui/TwitterIcon';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  SignUpSchema,
-  SignUpStep1Schema,
-  SignUpStep2Schema,
-  SignUpStep3Schema,
+  createSignUpSchema,
+  stepSchemas,
   type SignUpData,
 } from '@/lib/forms/schemas';
 import { trpc } from '../../lib/trpc';
@@ -25,7 +23,7 @@ import { Step1 } from '../../components/sign-up/step-1';
 import { Step2 } from '../../components/sign-up/step-2';
 import { Step3 } from '../../components/sign-up/step-3';
 
-interface SignUpScreenProps {
+type SignUpScreenProps = {
   currentStep: number;
   setCurrentStep: (step: number) => void;
   onBack?: () => void;
@@ -33,18 +31,18 @@ interface SignUpScreenProps {
 
 const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps) => {
   const [useEmail, setUseEmail] = useState(true);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [emailValidated, setEmailValidated] = useState(false);
 
   const router = useRouter();
   const navigation = useNavigation();
+  const utils = trpc.useUtils();
 
   const sendEmailMutation = trpc.email.sendActivationEmail.useMutation();
   const registerMutation = trpc.auth.register.useMutation();
 
+  const signUpSchema = useMemo(() => createSignUpSchema(), []);
+
   const form = useForm<SignUpData>({
-    resolver: zodResolver(SignUpSchema),
+    resolver: zodResolver(signUpSchema),
     mode: 'onChange',
     defaultValues: {
       emailOrPhone: "",
@@ -59,21 +57,9 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
     }
   });
 
-  const formatDate = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
 
-  const handleDateSelect = (date: Date) => {
-    setSelectedDate(date);
-    const formattedDate = formatDate(date);
-    form.setValue("birthdate", formattedDate, { shouldValidate: true });
-    setShowDatePicker(false);
-  };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentStep > 1) {
       navigation.setOptions({
         headerLeft: () => (
@@ -88,14 +74,23 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
     }
   }, [navigation, currentStep, onBack]);
 
-    const getCurrentFormState = () => {
-    const stepSchemas = [SignUpStep1Schema, SignUpStep2Schema, SignUpStep3Schema];
-    const currentSchema = stepSchemas[currentStep - 1];
-    
-    if (!currentSchema) return { isValid: false, isSubmitting: false };
-    
+  const getCurrentFormState = () => {
+    const currentStepSchemas = [stepSchemas.step1, stepSchemas.step2, stepSchemas.step3];
+    const currentSchema = currentStepSchemas[currentStep - 1];
+
+    if (!currentSchema) {
+      return { isValid: false, isSubmitting: form.formState.isSubmitting };
+    }
+
     try {
-      const currentData = form.getValues();
+      const allData = form.getValues();
+
+      const currentData = currentSchema.shape ?
+        Object.keys(currentSchema.shape).reduce((acc, key) => {
+          acc[key] = allData[key as keyof SignUpData];
+          return acc;
+        }, {} as any) : allData;
+
       currentSchema.parse(currentData);
       return { isValid: true, isSubmitting: form.formState.isSubmitting };
     } catch {
@@ -105,15 +100,37 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
 
   const handleNext = async () => {
     if (currentStep === 1) {
-      const isValid = await form.trigger(['emailOrPhone']);
-      if (isValid && emailValidated) {
+      const isValidFormat = await form.trigger(['emailOrPhone']);
+      if (isValidFormat) {
+        const emailValue = form.getValues('emailOrPhone');
+
+        if (emailValue && emailValue.includes('@')) {
+          try {
+            const result = await utils.auth.checkEmailExists.fetch({ email: emailValue });
+            if (result.exists) {
+              form.setError('emailOrPhone', {
+                type: 'manual',
+                message: 'This email is already in use. Please try another one.'
+              });
+              return;
+            }
+          } catch {
+            form.setError('emailOrPhone', {
+              type: 'manual',
+              message: 'Error checking email availability. Please try again.'
+            });
+            return;
+          }
+        }
+
         setCurrentStep(2);
       }
     } else if (currentStep === 2) {
       const isValid = await form.trigger(['password', 'confirmPassword']);
       if (isValid) setCurrentStep(3);
     } else if (currentStep === 3) {
-      const isValid = await form.trigger();
+      const isValid = await form.trigger(['firstName', 'lastName', 'username', 'phoneNumber', 'birthdate']);
+
       if (isValid) {
         const userData = form.getValues();
         try {
@@ -144,19 +161,14 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
             );
           }
         } catch (error) {
-          console.error('Registration error:', error);
-          Alert.alert("Error", error instanceof Error ? error.message : "Error creating user. Please try again.");
+          Alert.alert("Error", error instanceof Error ? error.message : "An unexpected error occurred. Please try again.");
         }
       }
     }
   };
 
-  const handleEmailValidation = useCallback((isValid: boolean) => {
-    setEmailValidated(isValid);
-  }, []);
-
   const renderStep1 = () => (
-    <Step1 onEmailValidated={handleEmailValidation} />
+    <Step1 />
   );
 
   const renderStep2 = () => (
@@ -164,12 +176,7 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
   );
 
   const renderStep3 = () => (
-    <Step3 
-      showDatePicker={showDatePicker}
-      setShowDatePicker={setShowDatePicker}
-      selectedDate={selectedDate}
-      onDateSelect={handleDateSelect}
-    />
+    <Step3 />
   );
 
   const currentFormState = getCurrentFormState();
@@ -209,18 +216,11 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
             {currentStep === 3 && renderStep3()}
 
             <TouchableOpacity
-              className={`py-4 px-8 rounded-full shadow-lg mt-4 ${
-                currentStep === 1 
-                  ? (currentFormState.isValid && emailValidated ? 'bg-[#00AAEC]' : 'bg-gray-300')
-                  : (currentFormState.isValid ? 'bg-[#00AAEC]' : 'bg-gray-300')
+              className={`py-4 px-8 rounded-full shadow-lg mt-4 ${currentFormState.isValid ? 'bg-[#00AAEC]' : 'bg-gray-300'
                 }`}
               onPress={handleNext}
               activeOpacity={0.9}
-              disabled={
-                currentStep === 1 
-                  ? !currentFormState.isValid || !emailValidated
-                  : !currentFormState.isValid || currentFormState.isSubmitting
-              }
+              disabled={!currentFormState.isValid || currentFormState.isSubmitting}
             >
               {currentFormState.isSubmitting ? (
                 <ActivityIndicator color="#fff" />
@@ -244,6 +244,7 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
               <Text className="text-[#00AAEC] font-semibold">Sign In</Text>
             </Text>
           </TouchableOpacity>
+
           <View className="mt-4">
             <Text className="text-center text-gray-400 text-sm">
               © 2025 TwitterClone.

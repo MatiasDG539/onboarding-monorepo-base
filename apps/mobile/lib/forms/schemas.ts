@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const ERROR_MESSAGES = {
   REQUIRED: "This field is required",
   EMAIL_INVALID: "Please enter a valid email",
+  EMAIL_ALREADY_EXISTS: "This email is already in use. Please try another one.",
   PHONE_INVALID: "Please enter a valid phone number",
   PASSWORD_TOO_SHORT: "Password must be at least 8 characters",
   PASSWORD_WEAK: "Password must contain at least one uppercase, one lowercase and one number",
@@ -30,7 +31,7 @@ export const SignInSchema = z.object({
 export type SignInData = z.infer<typeof SignInSchema>;
 
 // Sign-up schema
-export const SignUpSchema = z.object({
+export const createBaseSignUpSchema = () => z.object({
   emailOrPhone: z.string()
     .min(1, ERROR_MESSAGES.REQUIRED)
     .refine((value) => {
@@ -69,27 +70,43 @@ export const SignUpSchema = z.object({
       return age >= 13 && age <= 120;
     }, ERROR_MESSAGES.AGE_TOO_YOUNG),
   profilePicture: z.any().nullable().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
+});
+
+export const createSignUpSchema = () => createBaseSignUpSchema().refine((data) => data.password === data.confirmPassword, {
   message: ERROR_MESSAGES.PASSWORDS_DONT_MATCH,
   path: ["confirmPassword"],
 });
 
-// Step schemas derived from main schema
-export const SignUpStep1Schema = SignUpSchema.pick({ emailOrPhone: true });
-export const SignUpStep2Schema = SignUpSchema.pick({ password: true, confirmPassword: true }).refine((data) => data.password === data.confirmPassword, {
-  message: ERROR_MESSAGES.PASSWORDS_DONT_MATCH,
-  path: ["confirmPassword"],
-});
-export const SignUpStep3Schema = SignUpSchema.pick({ 
-  firstName: true, 
-  lastName: true, 
-  username: true, 
-  phoneNumber: true, 
-  birthdate: true, 
-  profilePicture: true 
-});
+export const SignUpSchema = createSignUpSchema();
+
+export const createSignUpStepSchemas = () => {
+  const baseSchema = createBaseSignUpSchema();
+  
+  return {
+    step1: baseSchema.pick({ emailOrPhone: true }),
+
+    step2: baseSchema.pick({ password: true, confirmPassword: true }).refine(
+      (data) => data.password === data.confirmPassword, 
+      {
+        message: ERROR_MESSAGES.PASSWORDS_DONT_MATCH,
+        path: ["confirmPassword"],
+      }
+    ),
+
+    step3: baseSchema.pick({ 
+      firstName: true, 
+      lastName: true, 
+      username: true, 
+      phoneNumber: true, 
+      birthdate: true, 
+      profilePicture: true 
+    }),
+  };
+};
+
+export const stepSchemas = createSignUpStepSchemas();
+export type SignUpStep1Data = z.infer<typeof stepSchemas.step1>;
+export type SignUpStep2Data = z.infer<typeof stepSchemas.step2>;
+export type SignUpStep3Data = z.infer<typeof stepSchemas.step3>;
 
 export type SignUpData = z.infer<typeof SignUpSchema>;
-export type SignUpStep1Data = z.infer<typeof SignUpStep1Schema>;
-export type SignUpStep2Data = z.infer<typeof SignUpStep2Schema>;
-export type SignUpStep3Data = z.infer<typeof SignUpStep3Schema>;

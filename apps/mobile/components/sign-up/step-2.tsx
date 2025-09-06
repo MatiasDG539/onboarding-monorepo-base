@@ -4,8 +4,8 @@ import { useFormContext } from 'react-hook-form';
 import { SignUpData } from '../../lib/forms/schemas';
 import TextInputField from '../forms/text-input-field';
 
-export const Step2: React.FC = () => {
-  const { control } = useFormContext<SignUpData>();
+export const Step2 = () => {
+  const { control, formState: { errors } } = useFormContext<SignUpData>();
 
   return (
     <View className="items-center mb-8">
@@ -20,6 +20,7 @@ export const Step2: React.FC = () => {
           secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}
+          error={errors.password}
         />
 
         <TextInputField
@@ -29,6 +30,7 @@ export const Step2: React.FC = () => {
           secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}
+          error={errors.confirmPassword}
         />
       </View>
     </View>

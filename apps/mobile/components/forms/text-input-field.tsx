@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextInput, Text, View, TextInputProps } from 'react-native';
-import { Control, Controller, FieldPath, FieldValues } from 'react-hook-form';
+import { Controller, Control, FieldPath, FieldValues, FieldError } from 'react-hook-form';
 
 type TextInputFieldProps<T extends FieldValues> = Omit<TextInputProps, 'onChangeText' | 'value'> & {
     control: Control<T>;
@@ -9,6 +9,7 @@ type TextInputFieldProps<T extends FieldValues> = Omit<TextInputProps, 'onChange
     secureTextEntry?: boolean;
     keyboardType?: TextInputProps['keyboardType'];
     autoCapitalize?: TextInputProps['autoCapitalize'];
+    error?: FieldError;
 }
 
 const TextInputField = <T extends FieldValues>({
@@ -18,6 +19,7 @@ const TextInputField = <T extends FieldValues>({
     secureTextEntry = false,
     keyboardType = 'default',
     autoCapitalize = 'none',
+    error,
     ...props
 }: TextInputFieldProps<T>) => {
     return (
@@ -25,26 +27,25 @@ const TextInputField = <T extends FieldValues>({
             <Controller
                 control={control}
                 name={name}
-                render={({ field: { onChange, value }, fieldState: { error } }) => (
-                    <>
-                        <TextInput
-                            className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
-                            style={{ minHeight: 48, paddingVertical: 10 }}
-                            placeholder={placeholder}
-                            autoCapitalize={autoCapitalize}
-                            keyboardType={keyboardType}
-                            secureTextEntry={secureTextEntry}
-                            onChangeText={onChange}
-                            value={value}
-                            placeholderTextColor="#A0AEC0"
-                            {...props}
-                        />
-                        {error && (
-                            <Text className="text-red-500 text-xs mb-2">{error.message}</Text>
-                        )}
-                    </>
+                render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                        className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+                        style={{ minHeight: 48 }}
+                        placeholder={placeholder}
+                        autoCapitalize={autoCapitalize}
+                        keyboardType={keyboardType}
+                        secureTextEntry={secureTextEntry}
+                        onChangeText={onChange}
+                        onBlur={onBlur}
+                        value={value || ''}
+                        placeholderTextColor="#A0AEC0"
+                        {...props}
+                    />
                 )}
             />
+            {error && (
+                <Text className="text-red-500 text-xs mb-2">{error.message}</Text>
+            )}
         </View>
     );
 };
