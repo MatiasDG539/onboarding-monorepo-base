@@ -21,33 +21,31 @@ const TextInputField = <T extends FieldValues>({
     autoCapitalize = 'none',
     error,
     ...props
-}: TextInputFieldProps<T>) => {
-    return (
-        <View>
-            <Controller
-                control={control}
-                name={name}
-                render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                        className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
-                        style={{ minHeight: 48 }}
-                        placeholder={placeholder}
-                        autoCapitalize={autoCapitalize}
-                        keyboardType={keyboardType}
-                        secureTextEntry={secureTextEntry}
-                        onChangeText={onChange}
-                        onBlur={onBlur}
-                        value={value || ''}
-                        placeholderTextColor="#A0AEC0"
-                        {...props}
-                    />
-                )}
-            />
-            {error && (
-                <Text className="text-red-500 text-xs mb-2">{error.message}</Text>
+}: TextInputFieldProps<T>) => (
+    <View>
+        <Controller
+            control={control}
+            name={name}
+            render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                    className="bg-white border border-gray-200 rounded-xl px-4 py-3 mb-3 text-base text-gray-900"
+                    style={{ minHeight: 48 }}
+                    placeholder={placeholder}
+                    autoCapitalize={autoCapitalize}
+                    keyboardType={keyboardType}
+                    secureTextEntry={secureTextEntry}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    value={value || ''}
+                    placeholderTextColor="#A0AEC0"
+                    {...props}
+                />
             )}
-        </View>
-    );
-};
+        />
+        {error && (
+            <Text className="text-red-500 text-xs mb-2">{error.message}</Text>
+        )}
+    </View>
+);
 
 export default TextInputField;
