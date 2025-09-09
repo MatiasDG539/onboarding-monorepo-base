@@ -1,11 +1,35 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useFormContext } from 'react-hook-form';
-import { SignUpData } from '../../lib/forms/schemas';
+import { SignUpData, stepSchemas } from '../../lib/forms/schemas';
 import TextInputField from '../forms/text-input-field';
 
-export const Step2 = () => {
-  const { control, formState: { errors } } = useFormContext<SignUpData>();
+type Step2Props = {
+  onNext: () => void;
+};
+
+export const Step2 = ({ onNext }: Step2Props) => {
+  const { control, formState: { errors }, trigger, getValues } = useFormContext<SignUpData>();
+
+  const handleNext = async () => {
+    const isValid = await trigger(['password', 'confirmPassword']);
+    if (isValid) {
+      onNext();
+    }
+  };
+
+  const isStepValid = () => {
+    const currentData = {
+      password: getValues('password'),
+      confirmPassword: getValues('confirmPassword')
+    };
+    try {
+      stepSchemas.step2.parse(currentData);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   return (
     <View className="items-center mb-8">
@@ -33,6 +57,17 @@ export const Step2 = () => {
           error={errors.confirmPassword}
         />
       </View>
+
+      <TouchableOpacity
+        className={`py-4 px-8 rounded-full shadow-lg mt-4 w-full ${isStepValid() ? 'bg-[#00AAEC]' : 'bg-gray-300'}`}
+        onPress={handleNext}
+        activeOpacity={0.9}
+        disabled={!isStepValid()}
+      >
+        <Text className="text-white font-bold text-lg text-center">
+          Next
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };

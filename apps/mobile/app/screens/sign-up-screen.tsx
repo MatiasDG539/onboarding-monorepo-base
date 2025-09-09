@@ -4,21 +4,17 @@ import {
   Text,
   TouchableOpacity,
   ScrollView,
-  Alert,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from 'react-native';
 import TwitterIcon from '@/components/icons/twitter-icon';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   SignUpSchema,
-  stepSchemas,
   type SignUpData,
 } from '@/lib/forms/schemas';
-import { trpc } from '../../lib/trpc';
-import { useRouter, useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { Step1 } from '../../components/sign-up/step-1';
 import { Step2 } from '../../components/sign-up/step-2';
 import { Step3 } from '../../components/sign-up/step-3';
@@ -32,12 +28,8 @@ type SignUpScreenProps = {
 const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps) => {
   const [useEmail, setUseEmail] = useState(true);
 
-  const router = useRouter();
   const navigation = useNavigation();
-  const utils = trpc.useUtils();
-
-  const sendEmailMutation = trpc.email.sendActivationEmail.useMutation();
-  const registerMutation = trpc.auth.register.useMutation();
+  const router = useRouter();
 
   const form = useForm<SignUpData>({
     resolver: zodResolver(SignUpSchema),
@@ -70,112 +62,31 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
     }
   }, [navigation, currentStep, onBack]);
 
-  const getCurrentFormState = () => {
-    const currentStepSchemas = [stepSchemas.step1, stepSchemas.step2, stepSchemas.step3];
-    const currentSchema = currentStepSchemas[currentStep - 1];
-
-    if (!currentSchema) {
-      return { isValid: false, isSubmitting: form.formState.isSubmitting };
-    }
-
-    try {
-      const allData = form.getValues();
-
-      const currentData = currentSchema.shape ?
-        Object.keys(currentSchema.shape).reduce((acc, key) => {
-          acc[key] = allData[key as keyof SignUpData];
-          return acc;
-        }, {} as any) : allData;
-
-      currentSchema.parse(currentData);
-      return { isValid: true, isSubmitting: form.formState.isSubmitting };
-    } catch {
-      return { isValid: false, isSubmitting: form.formState.isSubmitting };
-    }
+  const handleNext = () => {
+    setCurrentStep(currentStep + 1);
   };
 
-  const handleNext = async () => {
-    if (currentStep === 1) {
-      const isValidFormat = await form.trigger(['emailOrPhone']);
-      if (isValidFormat) {
-        const emailValue = form.getValues('emailOrPhone');
-
-        if (emailValue && emailValue.includes('@')) {
-          try {
-            const result = await utils.auth.checkEmailExists.fetch({ email: emailValue });
-            if (result.exists) {
-              form.setError('emailOrPhone', {
-                type: 'manual',
-                message: 'This email is already in use. Please try another one.'
-              });
-              return;
-            }
-          } catch {
-            form.setError('emailOrPhone', {
-              type: 'manual',
-              message: 'Error checking email availability. Please try again.'
-            });
-            return;
-          }
-        }
-
-        setCurrentStep(2);
-      }
-    } else if (currentStep === 2) {
-      const isValid = await form.trigger(['password', 'confirmPassword']);
-      if (isValid) setCurrentStep(3);
-    } else if (currentStep === 3) {
-      const isValid = await form.trigger(['firstName', 'lastName', 'username', 'phoneNumber', 'birthdate']);
-
-      if (isValid) {
-        const userData = form.getValues();
-        try {
-          const result = await registerMutation.mutateAsync(userData);
-
-          if (useEmail && result.user) {
-            const email = form.getValues("emailOrPhone");
-            try {
-              await sendEmailMutation.mutateAsync({ to: email });
-              router.push(`/verify-email?email=${encodeURIComponent(email)}&userId=${result.user.id}`);
-            } catch (emailError) {
-              Alert.alert("Error", emailError instanceof Error ? emailError.message : "Error sending verification code");
-            }
-          } else {
-            Alert.alert(
-              "Phone verification not available",
-              "Phone verification is not implemented yet. Please use email instead.",
-              [
-                {
-                  text: "Use Email",
-                  onPress: () => {
-                    setUseEmail(true);
-                    setCurrentStep(1);
-                    form.setValue("emailOrPhone", "");
-                  }
-                }
-              ]
-            );
-          }
-        } catch (error) {
-          Alert.alert("Error", error instanceof Error ? error.message : "An unexpected error occurred. Please try again.");
-        }
-      }
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
   const renderStep1 = () => (
-    <Step1 />
+    <Step1 onNext={handleNext} />
   );
 
   const renderStep2 = () => (
-    <Step2 />
+    <Step2 onNext={handleNext} />
   );
 
   const renderStep3 = () => (
-    <Step3 />
+    <Step3 
+      useEmail={useEmail} 
+      setUseEmail={setUseEmail} 
+      onBack={handleBack}
+    />
   );
-
-  const currentFormState = getCurrentFormState();
 
   return (
     <FormProvider {...form}>
@@ -209,22 +120,6 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
             {currentStep === 3 && renderStep3()}
-
-            <TouchableOpacity
-              className={`py-4 px-8 rounded-full shadow-lg mt-4 ${currentFormState.isValid ? 'bg-[#00AAEC]' : 'bg-gray-300'
-                }`}
-              onPress={handleNext}
-              activeOpacity={0.9}
-              disabled={!currentFormState.isValid || currentFormState.isSubmitting}
-            >
-              {currentFormState.isSubmitting ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text className="text-white font-bold text-lg text-center">
-                  {currentStep === 3 ? "Create Account" : "Next"}
-                </Text>
-              )}
-            </TouchableOpacity>
           </View>
         </ScrollView>
 

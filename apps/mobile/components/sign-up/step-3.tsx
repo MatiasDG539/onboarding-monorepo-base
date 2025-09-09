@@ -1,19 +1,34 @@
 import { useState } from "react"
-import { View, Text, TouchableOpacity, Platform, Modal } from "react-native"
+import { View, Text, TouchableOpacity, Platform, Modal, Alert, ActivityIndicator } from "react-native"
 import { useFormContext, Controller } from "react-hook-form"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import type { SignUpData } from "../../lib/forms/schemas"
+import { stepSchemas } from "../../lib/forms/schemas"
 import TextInputField from "../forms/text-input-field"
+import { trpc } from "../../lib/trpc"
+import { useRouter } from "expo-router"
 
-export const Step3 = () => {
+type Step3Props = {
+  useEmail: boolean;
+  setUseEmail: (useEmail: boolean) => void;
+  onBack: () => void;
+};
+
+export const Step3 = ({ useEmail, setUseEmail, onBack }: Step3Props) => {
   const {
     control,
     formState: { errors },
     setValue,
+    trigger,
+    getValues,
   } = useFormContext<SignUpData>()
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date(2000, 0, 1))
   const [tempDate, setTempDate] = useState(new Date(2000, 0, 1))
+  
+  const router = useRouter()
+  const sendEmailMutation = trpc.email.sendActivationEmail.useMutation()
+  const registerMutation = trpc.auth.register.useMutation()
 
   const formatDateForDisplay = (dateString: string) => {
     if (!dateString) return "Select birth date"
@@ -57,6 +72,62 @@ export const Step3 = () => {
     const formattedDate = tempDate.toISOString().split("T")[0]
     setValue("birthdate", formattedDate, { shouldValidate: true })
     setShowDatePicker(false)
+  }
+
+  const handleCreateAccount = async () => {
+    const isValid = await trigger(['firstName', 'lastName', 'username', 'phoneNumber', 'birthdate'])
+
+    if (isValid) {
+      const userData = getValues()
+      try {
+        const result = await registerMutation.mutateAsync(userData)
+
+        if (useEmail && result.user) {
+          const email = getValues("emailOrPhone")
+          try {
+            await sendEmailMutation.mutateAsync({ to: email })
+            router.push(`/verify-email?email=${encodeURIComponent(email)}&userId=${result.user.id}`)
+          } catch (emailError) {
+            Alert.alert("Error", emailError instanceof Error ? emailError.message : "Error sending verification code")
+          }
+        } else {
+          Alert.alert(
+            "Phone verification not available",
+            "Phone verification is not implemented yet. Please use email instead.",
+            [
+              {
+                text: "Use Email",
+                onPress: () => {
+                  setUseEmail(true)
+                  onBack()
+                  setValue("emailOrPhone", "")
+                }
+              }
+            ]
+          )
+        }
+      } catch (error) {
+        Alert.alert("Error", error instanceof Error ? error.message : "An unexpected error occurred. Please try again.")
+      }
+    }
+  }
+
+  // Check if current step is valid
+  const isStepValid = () => {
+    const currentData = {
+      firstName: getValues('firstName'),
+      lastName: getValues('lastName'),
+      username: getValues('username'),
+      phoneNumber: getValues('phoneNumber'),
+      birthdate: getValues('birthdate'),
+      profilePicture: getValues('profilePicture')
+    }
+    try {
+      stepSchemas.step3.parse(currentData)
+      return true
+    } catch {
+      return false
+    }
   }
 
   return (
@@ -181,6 +252,21 @@ export const Step3 = () => {
 
           {errors.birthdate && <Text className="text-red-500 text-xs mb-2">{errors.birthdate.message}</Text>}
         </View>
+
+        <TouchableOpacity
+          className={`py-4 px-8 rounded-full shadow-lg mt-4 w-full ${isStepValid() ? 'bg-[#00AAEC]' : 'bg-gray-300'}`}
+          onPress={handleCreateAccount}
+          activeOpacity={0.9}
+          disabled={!isStepValid() || registerMutation.isPending}
+        >
+          {registerMutation.isPending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text className="text-white font-bold text-lg text-center">
+              Create Account
+            </Text>
+          )}
+        </TouchableOpacity>
       </View>
     </>
   )
