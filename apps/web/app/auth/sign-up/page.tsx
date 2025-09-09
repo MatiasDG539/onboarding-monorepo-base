@@ -92,11 +92,7 @@ const SignUp: FC = () => {
             ...passwordForm.getValues(),
             ...profileForm.getValues(),
           };
-          const result = await registerMutation.mutateAsync(userData);
-          if (!result.success) {
-            setError('error' in result ? result.error : "No se pudo crear el usuario.");
-            return;
-          }
+          await registerMutation.mutateAsync(userData);
           const emailOrPhone = emailOrPhoneForm.getValues("emailOrPhone");
           await sendActivationEmail.mutateAsync({ to: emailOrPhone });
           const encodedEmail = encodeURIComponent(emailOrPhone);

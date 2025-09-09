@@ -1,7 +1,7 @@
 import { Html } from "@react-email/components";
 import * as React from "react";
 
-interface ActivationEmailProps {
+type ActivationEmailProps = {
   code: string;
 }
 

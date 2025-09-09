@@ -1,38 +1,75 @@
 import { z } from 'zod';
-import { router, publicProcedure } from '../../../trpc/base';
-
-
-type UserData = z.infer<typeof userDataSchema>;
-
-const users = new Map<string, UserData>();
+import { publicProcedure } from '../../../trpc/base';
+import { TRPCError } from '@trpc/server';
+import bcrypt from 'bcryptjs';
 
 const userDataSchema = z.object({
-  emailOrPhone: z.string(),
-  password: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  username: z.string(),
-  phoneNumber: z.string(),
-  birthdate: z.string(),
-  // profilePicture omitted for simplicity (File type not serializable)
+  emailOrPhone: z.string().email(),
+  password: z.string().min(6),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  username: z.string().min(3),
+  phoneNumber: z.string().optional(),
+  birthdate: z.string().transform(str => new Date(str)),
 });
 
-export const authRouter = router({
-  register: publicProcedure
+export const register = publicProcedure
     .input(userDataSchema)
-    .mutation(({ input }) => {
-      if (users.has(input.emailOrPhone) || users.has(input.username)) {
-        return { success: false, error: 'User already exists' };
-      }
-      users.set(input.emailOrPhone, input);
-      users.set(input.username, input);
-      return { success: true, user: input };
-    }),
+    .mutation(async ({ input, ctx }) => {
+      try {
+        
+        const existingUser = await ctx.prisma.user.findFirst({
+          where: {
+            OR: [
+              { email: input.emailOrPhone },
+              { username: input.username }
+            ]
+          }
+        });
 
-  getUser: publicProcedure
-    .input(z.string())
-    .query(({ input }) => {
-      const user = users.get(input);
-      return user || null;
-    }),
-});
+        if (existingUser) {
+          throw new TRPCError({
+            code: 'CONFLICT',
+            message: 'User already exists',
+          });
+        }
+
+        const hashedPassword = await bcrypt.hash(input.password, 10);
+
+        const verificationCode = Math.floor(100000 + Math.random() * 900000);
+
+        const user = await ctx.prisma.user.create({
+          data: {
+            firstName: input.firstName,
+            lastName: input.lastName,
+            email: input.emailOrPhone,
+            password: hashedPassword,
+            username: input.username,
+            dateOfBirth: input.birthdate,
+            avatar: '',
+            verificationCode,
+            isVerified: false,
+          }
+        });
+
+        return {
+          user: {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            username: user.username,
+          },
+          verificationCode: user.verificationCode
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        console.error('Registration error:', error);
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to create user',
+        });
+      }
+    });

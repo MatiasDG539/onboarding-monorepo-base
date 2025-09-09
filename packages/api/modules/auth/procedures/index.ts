@@ -1,9 +1,5 @@
-import { authRouter as registerRouter } from './register';
-import { verifyCodeRouter } from './verify-code';
-
-import { router } from '../../../trpc/base';
-
-export const authRouter = router({
-	...registerRouter._def.record,
-	verifyCode: verifyCodeRouter._def.record.verify,
-});
+export { checkEmailExists } from './check-email-exists';
+export { register } from './register';
+export { getUser } from './get-user';
+export { login } from './login';
+export { verifyCode } from './verify-code';

@@ -7,7 +7,7 @@ import { Button } from "@repo/ui/button";
 import { useRouter } from "next/navigation";
 import { trpc } from "../lib/trpc";
 
-interface VerifyEmailProps {
+type VerifyEmailProps = {
   email?: string;
 }
 
@@ -94,16 +94,10 @@ const VerifyEmail: FC<VerifyEmailProps> = ({ email = "user@example.com" }) => {
 
     try {
       const enteredCode = code.join("");
-      const result = await verifyMutation.mutateAsync({
+      await verifyMutation.mutateAsync({
         email,
         code: enteredCode,
       });
-      if (!result.success) {
-        setError("Código inválido. Intenta nuevamente.");
-        setCode(["", "", "", "", "", ""]);
-        inputRefs.current[0]?.focus();
-        return;
-      }
       router.push("/dashboard");
     } catch (error) {
       console.error("Error verifying code:", error);

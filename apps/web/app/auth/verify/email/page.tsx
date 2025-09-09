@@ -1,7 +1,7 @@
 import React from "react";
 import VerifyEmail from "../../../../components/verify-email";
 
-interface EmailVerificationPageProps {
+type EmailVerificationPageProps = {
   searchParams: Promise<{ email?: string }>;
 }
 

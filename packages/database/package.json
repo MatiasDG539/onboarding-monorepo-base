@@ -14,9 +14,16 @@
     "db:migrate": "pnpm with-env prisma migrate deploy"
   },
   "devDependencies": {
-    "prisma": "^5.0.0"
+    "@types/bcryptjs": "^3.0.0",
+    "@types/node": "^22.18.0",
+    "prisma": "^5.0.0",
+    "tsx": "^4.20.5"
   },
   "dependencies": {
-    "@prisma/client": "^5.0.0"
+    "@prisma/client": "^5.0.0",
+    "bcryptjs": "^3.0.2"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
