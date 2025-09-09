@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import TwitterIcon from '@/components/ui/TwitterIcon';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
-  createSignUpSchema,
+  SignUpSchema,
   stepSchemas,
   type SignUpData,
 } from '@/lib/forms/schemas';
@@ -39,10 +39,8 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
   const sendEmailMutation = trpc.email.sendActivationEmail.useMutation();
   const registerMutation = trpc.auth.register.useMutation();
 
-  const signUpSchema = useMemo(() => createSignUpSchema(), []);
-
   const form = useForm<SignUpData>({
-    resolver: zodResolver(signUpSchema),
+    resolver: zodResolver(SignUpSchema),
     mode: 'onChange',
     defaultValues: {
       emailOrPhone: "",
@@ -56,8 +54,6 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
       profilePicture: null,
     }
   });
-
-
 
   useEffect(() => {
     if (currentStep > 1) {

@@ -31,7 +31,7 @@ export const SignInSchema = z.object({
 export type SignInData = z.infer<typeof SignInSchema>;
 
 // Sign-up schema
-export const createBaseSignUpSchema = () => z.object({
+export const SignUpSchema = z.object({
   emailOrPhone: z.string()
     .min(1, ERROR_MESSAGES.REQUIRED)
     .refine((value) => {
@@ -70,41 +70,31 @@ export const createBaseSignUpSchema = () => z.object({
       return age >= 13 && age <= 120;
     }, ERROR_MESSAGES.AGE_TOO_YOUNG),
   profilePicture: z.any().nullable().optional(),
-});
-
-export const createSignUpSchema = () => createBaseSignUpSchema().refine((data) => data.password === data.confirmPassword, {
+}).refine((data) => data.password === data.confirmPassword, {
   message: ERROR_MESSAGES.PASSWORDS_DONT_MATCH,
   path: ["confirmPassword"],
 });
 
-export const SignUpSchema = createSignUpSchema();
+export const stepSchemas = {
+  step1: SignUpSchema.pick({ emailOrPhone: true }),
 
-export const createSignUpStepSchemas = () => {
-  const baseSchema = createBaseSignUpSchema();
-  
-  return {
-    step1: baseSchema.pick({ emailOrPhone: true }),
+  step2: SignUpSchema.pick({ password: true, confirmPassword: true }).refine(
+    (data) => data.password === data.confirmPassword, 
+    {
+      message: ERROR_MESSAGES.PASSWORDS_DONT_MATCH,
+      path: ["confirmPassword"],
+    }
+  ),
 
-    step2: baseSchema.pick({ password: true, confirmPassword: true }).refine(
-      (data) => data.password === data.confirmPassword, 
-      {
-        message: ERROR_MESSAGES.PASSWORDS_DONT_MATCH,
-        path: ["confirmPassword"],
-      }
-    ),
-
-    step3: baseSchema.pick({ 
-      firstName: true, 
-      lastName: true, 
-      username: true, 
-      phoneNumber: true, 
-      birthdate: true, 
-      profilePicture: true 
-    }),
-  };
+  step3: SignUpSchema.pick({ 
+    firstName: true, 
+    lastName: true, 
+    username: true, 
+    phoneNumber: true, 
+    birthdate: true, 
+    profilePicture: true 
+  }),
 };
-
-export const stepSchemas = createSignUpStepSchemas();
 export type SignUpStep1Data = z.infer<typeof stepSchemas.step1>;
 export type SignUpStep2Data = z.infer<typeof stepSchemas.step2>;
 export type SignUpStep3Data = z.infer<typeof stepSchemas.step3>;
