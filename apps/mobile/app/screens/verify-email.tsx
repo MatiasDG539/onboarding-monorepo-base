@@ -157,7 +157,7 @@ const VerifyEmailScreen = () => {
           {isComplete && (
             <View className="mb-10">
               <View className="h-1 bg-gray-200 rounded-sm overflow-hidden">
-                <View className="h-full bg-[#00AAEC] rounded-sm" style={{ width: '100%' }} />
+                <View className="h-full w-full bg-[#00AAEC] rounded-sm" />
               </View>
             </View>
           )}
@@ -182,7 +182,7 @@ const VerifyEmailScreen = () => {
           >
             <Text className="text-base font-semibold text-gray-700 text-center mb-5">Enter verification code</Text>
             
-            <View className="flex-row justify-center mb-4" style={{ gap: 14 }}>
+            <View className="flex-row justify-center mb-4 gap-3.5">
               {code.map((digit, index) => (
                 <View key={index} className="relative">
                   <TextInput
@@ -210,7 +210,7 @@ const VerifyEmailScreen = () => {
 
             {error ? (
               <View className="items-center min-h-6 bg-red-50 rounded-lg border border-red-200 px-3 py-2 mt-2">
-                <View className="flex-row items-center justify-center" style={{ gap: 8 }}>
+                <View className="flex-row items-center justify-center gap-2">
                   <ErrorIcon width={16} height={16} color="#dc2626" />
                   <Text className="text-sm text-red-600 text-center font-medium flex-1">{error}</Text>
                 </View>
@@ -224,9 +224,9 @@ const VerifyEmailScreen = () => {
             )}
           </Animated.View>
 
-          <View className="mb-8" style={{ gap: 16 }}>
+          <View className="mb-8 gap-4">
           
-            <View className="items-center" style={{ gap: 12 }}>
+            <View className="items-center gap-3">
               <Text className="text-sm text-gray-500 text-center">
                 Didn&apos;t receive the code?
               </Text>
@@ -239,7 +239,7 @@ const VerifyEmailScreen = () => {
                   <Text className="text-base text-[#00AAEC] font-semibold">Resend Code</Text>
                 </TouchableOpacity>
               ) : (
-                <View className="items-center py-2" style={{ gap: 8 }}>
+                <View className="items-center py-2 gap-2">
                   <Text className="text-sm text-gray-500 text-center">
                     Resend available in
                   </Text>
