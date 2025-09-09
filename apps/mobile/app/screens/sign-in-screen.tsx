@@ -1,6 +1,6 @@
 import React, { useLayoutEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import TwitterIcon from '@/components/ui/TwitterIcon';
+import TwitterIcon from '@/components/icons/twitter-icon';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'expo-router';

@@ -9,7 +9,7 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import TwitterIcon from '@/components/ui/TwitterIcon';
+import TwitterIcon from '@/components/icons/twitter-icon';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -182,9 +182,8 @@ const SignUpScreen = ({ currentStep, setCurrentStep, onBack }: SignUpScreenProps
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1 bg-gradient-to-b from-slate-50 to-white"
+        style={{ paddingTop: 72 }}
       >
-        <View className="h-14" />
-        <View style={{ height: 16 }} />
 
         <View className="items-center mb-6">
           <TwitterIcon width={72} height={72} />

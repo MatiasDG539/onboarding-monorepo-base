@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { trpc } from '../../lib/trpc';
-import Svg, { Path } from 'react-native-svg';
+import EmailIcon from '../../components/icons/email-icon';
+import ErrorIcon from '../../components/icons/error-icon';
 
 const VerifyEmailScreen = () => {
   const router = useRouter();
@@ -163,20 +164,7 @@ const VerifyEmailScreen = () => {
 
           <View className="items-center mb-10">
             <View className="mb-5">
-              <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                <Path 
-                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" 
-                  stroke="#00AAEC" 
-                  strokeWidth="2" 
-                  fill="none"
-                />
-                <Path 
-                  d="m22 6-10 7L2 6" 
-                  stroke="#00AAEC" 
-                  strokeWidth="2" 
-                  fill="none"
-                />
-              </Svg>
+              <EmailIcon width={48} height={48} color="#00AAEC" />
             </View>
             
             <Text className="text-3xl font-bold text-gray-900 mb-2 text-center">Check your {isEmail ? 'email' : 'phone'}</Text>
@@ -223,12 +211,7 @@ const VerifyEmailScreen = () => {
             {error ? (
               <View className="items-center min-h-6 bg-red-50 rounded-lg border border-red-200 px-3 py-2 mt-2">
                 <View className="flex-row items-center justify-center" style={{ gap: 8 }}>
-                  <Svg width={16} height={16} viewBox="0 0 20 20" fill="none" className="flex-shrink-0">
-                    <Path 
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" 
-                      fill="#dc2626"
-                    />
-                  </Svg>
+                  <ErrorIcon width={16} height={16} color="#dc2626" />
                   <Text className="text-sm text-red-600 text-center font-medium flex-1">{error}</Text>
                 </View>
               </View>
